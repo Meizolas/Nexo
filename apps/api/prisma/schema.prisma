@@ -1,0 +1,454 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+
+  @@map("organization_status")
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+
+  @@map("user_status")
+}
+
+enum PlatformRole {
+  USER
+  SUPER_ADMIN
+
+  @@map("platform_role")
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REVOKED
+
+  @@map("membership_status")
+}
+
+enum RoleCode {
+  ORG_ADMIN
+  LAWYER
+  REAL_ESTATE_MANAGER
+  STAFF
+  CLIENT
+  OWNER
+  TENANT
+
+  @@map("role_code")
+}
+
+enum PermissionEffect {
+  ALLOW
+  DENY
+
+  @@map("permission_effect")
+}
+
+enum PartyType {
+  PERSON
+  COMPANY
+
+  @@map("party_type")
+}
+
+enum PartyRoleCode {
+  CLIENT
+  OWNER
+  TENANT
+
+  @@map("party_role_code")
+}
+
+enum DocumentVisibility {
+  INTERNAL
+  CLIENT_VISIBLE
+  RESTRICTED
+
+  @@map("document_visibility")
+}
+
+enum DocumentStatus {
+  ACTIVE
+  DELETED
+
+  @@map("document_status")
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+
+  @@map("notification_status")
+}
+
+enum LegalDeadlinePriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+
+  @@map("legal_deadline_priority")
+}
+
+enum LegalDeadlineStatus {
+  OPEN
+  COMPLETED
+  DISMISSED
+
+  @@map("legal_deadline_status")
+}
+
+enum HearingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+
+  @@map("hearing_status")
+}
+
+model Organization {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String             @db.VarChar(160)
+  slug           String             @unique @db.VarChar(80)
+  status         OrganizationStatus @default(ACTIVE)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?          @map("deleted_at") @db.Timestamptz(3)
+  memberships    Membership[]
+  auditEvents    AuditEvent[]
+  parties        Party[]
+  documents      Document[]
+  notifications  Notification[]
+  legalCases     LegalCase[]
+  caseMovements  CaseMovement[]
+  legalDeadlines LegalDeadline[]
+  hearings       Hearing[]
+  partyUserLinks PartyUserLink[]
+
+  @@index([status, deletedAt])
+  @@map("organizations")
+}
+
+model User {
+  id                   String                 @id @db.Uuid
+  email                String                 @unique @db.VarChar(320)
+  displayName          String                 @map("display_name") @db.VarChar(160)
+  status               UserStatus             @default(ACTIVE)
+  platformRole         PlatformRole           @default(USER) @map("platform_role")
+  lastAuthenticatedAt  DateTime?              @map("last_authenticated_at") @db.Timestamptz(3)
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  memberships          Membership[]
+  auditEvents          AuditEvent[]           @relation("AuditActor")
+  uploadedDocuments    Document[]             @relation("DocumentUploader")
+  notifications        Notification[]         @relation("NotificationRecipient")
+  legalCaseAssignments CaseLawyerAssignment[]
+  createdCaseMovements CaseMovement[]         @relation("MovementCreator")
+  publishedMovements   CaseMovement[]         @relation("MovementPublisher")
+  assignedDeadlines    LegalDeadline[]        @relation("DeadlineAssignee")
+  completedDeadlines   LegalDeadline[]        @relation("DeadlineCompleter")
+  portalPartyLinks     PartyUserLink[]        @relation("PortalPartyUser")
+  grantedPortalLinks   PartyUserLink[]        @relation("PortalLinkGrantor")
+
+  @@index([status])
+  @@map("users")
+}
+
+model Membership {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  userId         String            @map("user_id") @db.Uuid
+  status         MembershipStatus  @default(INVITED)
+  isDefault      Boolean           @default(false) @map("is_default")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  roles          MembershipRole[]
+  grants         PermissionGrant[]
+
+  @@unique([organizationId, userId])
+  @@index([userId, status])
+  @@index([organizationId, status])
+  @@map("memberships")
+}
+
+model MembershipRole {
+  membershipId String     @map("membership_id") @db.Uuid
+  role         RoleCode
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, role])
+  @@map("membership_roles")
+}
+
+model PermissionGrant {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  membershipId String           @map("membership_id") @db.Uuid
+  permission   String           @db.VarChar(120)
+  effect       PermissionEffect
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  membership   Membership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, permission])
+  @@map("permission_grants")
+}
+
+model AuditEvent {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String?       @map("organization_id") @db.Uuid
+  actorUserId    String?       @map("actor_user_id") @db.Uuid
+  action         String        @db.VarChar(120)
+  entityType     String        @map("entity_type") @db.VarChar(120)
+  entityId       String?       @map("entity_id") @db.VarChar(120)
+  previousData   Json?         @map("previous_data")
+  newData        Json?         @map("new_data")
+  ipAddress      String?       @map("ip_address") @db.VarChar(45)
+  userAgent      String?       @map("user_agent") @db.VarChar(512)
+  correlationId  String        @map("correlation_id") @db.Uuid
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actor          User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
+  @@map("audit_events")
+}
+
+model Party {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String          @map("organization_id") @db.Uuid
+  type               PartyType
+  name               String          @db.VarChar(160)
+  taxId              String?         @map("tax_id") @db.VarChar(14)
+  email              String?         @db.VarChar(320)
+  phone              String?         @db.VarChar(13)
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?       @map("deleted_at") @db.Timestamptz(3)
+  organization       Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  roles              PartyRole[]
+  caseParticipations CaseParty[]
+  portalLinks        PartyUserLink[]
+
+  @@unique([organizationId, taxId])
+  @@unique([organizationId, id])
+  @@index([organizationId, type, deletedAt])
+  @@index([organizationId, name])
+  @@map("parties")
+}
+
+model PartyRole {
+  partyId   String        @map("party_id") @db.Uuid
+  role      PartyRoleCode
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  party     Party         @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@id([partyId, role])
+  @@map("party_roles")
+}
+
+model Document {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String             @map("organization_id") @db.Uuid
+  uploadedByUserId String             @map("uploaded_by_user_id") @db.Uuid
+  originalName     String             @map("original_name") @db.VarChar(255)
+  storageBucket    String             @map("storage_bucket") @db.VarChar(80)
+  storagePath      String             @map("storage_path") @db.VarChar(500)
+  mimeType         String             @map("mime_type") @db.VarChar(160)
+  sizeBytes        BigInt             @map("size_bytes")
+  sha256           String             @db.Char(64)
+  visibility       DocumentVisibility
+  status           DocumentStatus     @default(ACTIVE)
+  contextType      String?            @map("context_type") @db.VarChar(80)
+  contextId        String?            @map("context_id") @db.Uuid
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?          @map("deleted_at") @db.Timestamptz(3)
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  uploadedBy       User               @relation("DocumentUploader", fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([storageBucket, storagePath])
+  @@index([organizationId, contextType, contextId])
+  @@index([organizationId, visibility, deletedAt])
+  @@map("documents")
+}
+
+model Notification {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String             @map("organization_id") @db.Uuid
+  recipientUserId String             @map("recipient_user_id") @db.Uuid
+  type            String             @db.VarChar(80)
+  title           String             @db.VarChar(160)
+  body            String             @db.VarChar(2000)
+  data            Json?
+  status          NotificationStatus @default(UNREAD)
+  readAt          DateTime?          @map("read_at") @db.Timestamptz(3)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  recipient       User               @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, recipientUserId, status, createdAt])
+  @@map("notifications")
+}
+
+model LegalCase {
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  caseNumber     String?                @map("case_number") @db.Char(20)
+  subject        String                 @db.VarChar(200)
+  tribunal       String?                @db.VarChar(160)
+  district       String?                @db.VarChar(160)
+  courtDivision  String?                @map("court_division") @db.VarChar(160)
+  internalNotes  String?                @map("internal_notes") @db.Text
+  clientSummary  String?                @map("client_summary") @db.Text
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?              @map("deleted_at") @db.Timestamptz(3)
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  parties        CaseParty[]
+  lawyers        CaseLawyerAssignment[]
+  movements      CaseMovement[]
+  deadlines      LegalDeadline[]
+  hearings       Hearing[]
+
+  @@unique([organizationId, caseNumber])
+  @@index([organizationId, deletedAt, createdAt])
+  @@index([organizationId, subject])
+  @@map("legal_cases")
+}
+
+model CaseParty {
+  legalCaseId String    @map("legal_case_id") @db.Uuid
+  partyId     String    @map("party_id") @db.Uuid
+  role        String    @db.VarChar(40)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  legalCase   LegalCase @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  party       Party     @relation(fields: [partyId], references: [id], onDelete: Restrict)
+
+  @@id([legalCaseId, partyId, role])
+  @@index([partyId, legalCaseId])
+  @@map("case_parties")
+}
+
+model CaseLawyerAssignment {
+  legalCaseId String    @map("legal_case_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  isPrimary   Boolean   @default(false) @map("is_primary")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  legalCase   LegalCase @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([legalCaseId, userId])
+  @@index([userId, legalCaseId])
+  @@map("case_lawyer_assignments")
+}
+
+model CaseMovement {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId      String       @map("organization_id") @db.Uuid
+  legalCaseId         String       @map("legal_case_id") @db.Uuid
+  createdByUserId     String       @map("created_by_user_id") @db.Uuid
+  publishedByUserId   String?      @map("published_by_user_id") @db.Uuid
+  occurredAt          DateTime     @map("occurred_at") @db.Timestamptz(3)
+  internalDescription String       @map("internal_description") @db.Text
+  clientDescription   String?      @map("client_description") @db.Text
+  isPublished         Boolean      @default(false) @map("is_published")
+  publishedAt         DateTime?    @map("published_at") @db.Timestamptz(3)
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime?    @map("deleted_at") @db.Timestamptz(3)
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  legalCase           LegalCase    @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  createdBy           User         @relation("MovementCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  publishedBy         User?        @relation("MovementPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, legalCaseId, occurredAt])
+  @@index([organizationId, isPublished, deletedAt])
+  @@map("case_movements")
+}
+
+model LegalDeadline {
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String                @map("organization_id") @db.Uuid
+  legalCaseId       String                @map("legal_case_id") @db.Uuid
+  assignedToUserId  String                @map("assigned_to_user_id") @db.Uuid
+  completedByUserId String?               @map("completed_by_user_id") @db.Uuid
+  title             String                @db.VarChar(200)
+  description       String?               @db.Text
+  dueAt             DateTime              @map("due_at") @db.Timestamptz(3)
+  priority          LegalDeadlinePriority @default(NORMAL)
+  status            LegalDeadlineStatus   @default(OPEN)
+  resolutionNote    String?               @map("resolution_note") @db.VarChar(2000)
+  completedAt       DateTime?             @map("completed_at") @db.Timestamptz(3)
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime?             @map("deleted_at") @db.Timestamptz(3)
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  legalCase         LegalCase             @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  assignedTo        User                  @relation("DeadlineAssignee", fields: [assignedToUserId], references: [id], onDelete: Restrict)
+  completedBy       User?                 @relation("DeadlineCompleter", fields: [completedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status, dueAt, deletedAt])
+  @@index([organizationId, legalCaseId, dueAt])
+  @@index([assignedToUserId, status, dueAt])
+  @@map("legal_deadlines")
+}
+
+model Hearing {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  legalCaseId     String        @map("legal_case_id") @db.Uuid
+  title           String        @db.VarChar(200)
+  scheduledAt     DateTime      @map("scheduled_at") @db.Timestamptz(3)
+  location        String?       @db.VarChar(300)
+  notes           String?       @db.Text
+  status          HearingStatus @default(SCHEDULED)
+  isClientVisible Boolean       @default(false) @map("is_client_visible")
+  resolutionNote  String?       @map("resolution_note") @db.VarChar(2000)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(3)
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  legalCase       LegalCase     @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status, scheduledAt, deletedAt], map: "hearings_org_status_sched_deleted_idx")
+  @@index([organizationId, legalCaseId, scheduledAt], map: "hearings_org_case_sched_idx")
+  @@map("hearings")
+}
+
+model PartyUserLink {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  partyId         String       @map("party_id") @db.Uuid
+  userId          String       @map("user_id") @db.Uuid
+  grantedByUserId String       @map("granted_by_user_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt       DateTime?    @map("revoked_at") @db.Timestamptz(3)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  party           Party        @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  user            User         @relation("PortalPartyUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy       User         @relation("PortalLinkGrantor", fields: [grantedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, partyId, userId])
+  @@index([organizationId, userId, revokedAt])
+  @@index([organizationId, partyId, revokedAt])
+  @@map("party_user_links")
+}

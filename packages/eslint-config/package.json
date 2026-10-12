@@ -1,0 +1,24 @@
+{
+  "name": "@platform/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./nestjs": "./nestjs.mjs"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.48.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "scripts": {
+    "build": "node --check nestjs.mjs",
+    "lint": "node --check nestjs.mjs",
+    "typecheck": "node --check nestjs.mjs",
+    "test": "node --test"
+  }
+}

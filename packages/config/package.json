@@ -1,0 +1,15 @@
+{
+  "name": "@platform/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig": "./tsconfig.base.json"
+  },
+  "scripts": {
+    "build": "node --check index.mjs",
+    "lint": "node --check index.mjs",
+    "typecheck": "node --check index.mjs",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,372 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { apiRequest } from "@/lib/api";
+
+function optional(formData: FormData, key: string) {
+  const value = String(formData.get(key) ?? "").trim();
+  return value || undefined;
+}
+
+export async function createLegalClient(formData: FormData) {
+  try {
+    await apiRequest("/parties", {
+      method: "POST",
+      body: JSON.stringify({
+        type: String(formData.get("type")),
+        name: String(formData.get("name") ?? ""),
+        taxId: optional(formData, "taxId"),
+        email: optional(formData, "email"),
+        phone: optional(formData, "phone"),
+        roles: ["CLIENT"],
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cadastrar o cliente.";
+    redirect(`/legal/people?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/legal/people");
+  redirect("/legal/people?created=1");
+}
+
+export async function createLegalCase(formData: FormData) {
+  try {
+    await apiRequest("/legal/cases", {
+      method: "POST",
+      body: JSON.stringify({
+        caseNumber: optional(formData, "caseNumber"),
+        subject: String(formData.get("subject") ?? ""),
+        tribunal: optional(formData, "tribunal"),
+        district: optional(formData, "district"),
+        courtDivision: optional(formData, "courtDivision"),
+        internalNotes: optional(formData, "internalNotes"),
+        clientSummary: optional(formData, "clientSummary"),
+        responsibleLawyerId: String(formData.get("responsibleLawyerId") ?? ""),
+        parties: [
+          { partyId: String(formData.get("clientId") ?? ""), role: "CLIENT" },
+        ],
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cadastrar o processo.";
+    redirect(`/legal/cases?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/legal/cases");
+  redirect("/legal/cases?created=1");
+}
+
+function movementPath(formData: FormData) {
+  const caseId = String(formData.get("caseId") ?? "");
+  return { caseId, path: `/legal/cases/${caseId}` };
+}
+
+export async function createCaseMovement(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const localDateTime = String(formData.get("occurredAt") ?? "");
+  try {
+    const occurredAt = new Date(`${localDateTime}:00-03:00`).toISOString();
+    await apiRequest(`/legal/cases/${caseId}/movements`, {
+      method: "POST",
+      body: JSON.stringify({
+        occurredAt,
+        internalDescription: String(formData.get("internalDescription") ?? ""),
+        clientDescription: optional(formData, "clientDescription"),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível registrar a movimentação.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?created=1`);
+}
+
+export async function publishCaseMovement(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const movementId = String(formData.get("movementId") ?? "");
+  try {
+    await apiRequest(`/legal/cases/${caseId}/movements/${movementId}/publish`, {
+      method: "POST",
+      body: JSON.stringify({
+        clientDescription: String(formData.get("clientDescription") ?? ""),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível publicar a movimentação.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?published=1`);
+}
+
+export async function unpublishCaseMovement(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const movementId = String(formData.get("movementId") ?? "");
+  try {
+    await apiRequest(
+      `/legal/cases/${caseId}/movements/${movementId}/unpublish`,
+      { method: "POST" },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível retirar a publicação.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?unpublished=1`);
+}
+
+export async function updateCaseMovement(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const movementId = String(formData.get("movementId") ?? "");
+  try {
+    const localDateTime = String(formData.get("occurredAt") ?? "");
+    const occurredAt = new Date(`${localDateTime}:00-03:00`).toISOString();
+    await apiRequest(`/legal/cases/${caseId}/movements/${movementId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        occurredAt,
+        internalDescription: String(formData.get("internalDescription") ?? ""),
+        clientDescription: optional(formData, "clientDescription"),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel atualizar a movimentacao.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?updated=1`);
+}
+
+export async function createLegalDeadline(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  try {
+    const localDateTime = String(formData.get("dueAt") ?? "");
+    await apiRequest(`/legal/cases/${caseId}/deadlines`, {
+      method: "POST",
+      body: JSON.stringify({
+        title: String(formData.get("title") ?? ""),
+        description: optional(formData, "description"),
+        dueAt: new Date(`${localDateTime}:00-03:00`).toISOString(),
+        priority: String(formData.get("priority") ?? "NORMAL"),
+        assignedToUserId: String(formData.get("assignedToUserId") ?? ""),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel criar o prazo.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?deadlineCreated=1`);
+}
+
+export async function resolveLegalDeadline(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const deadlineId = String(formData.get("deadlineId") ?? "");
+  try {
+    await apiRequest(`/legal/cases/${caseId}/deadlines/${deadlineId}/resolve`, {
+      method: "POST",
+      body: JSON.stringify({
+        status: String(formData.get("status") ?? "COMPLETED"),
+        resolutionNote: optional(formData, "resolutionNote"),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel tratar o prazo.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?deadlineResolved=1`);
+}
+
+export async function updateLegalDeadline(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const deadlineId = String(formData.get("deadlineId") ?? "");
+  try {
+    const localDateTime = String(formData.get("dueAt") ?? "");
+    await apiRequest(`/legal/cases/${caseId}/deadlines/${deadlineId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        title: String(formData.get("title") ?? ""),
+        description: optional(formData, "description"),
+        dueAt: new Date(`${localDateTime}:00-03:00`).toISOString(),
+        priority: String(formData.get("priority") ?? "NORMAL"),
+        assignedToUserId: String(formData.get("assignedToUserId") ?? ""),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel atualizar o prazo.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?deadlineUpdated=1`);
+}
+
+export async function scheduleHearing(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  try {
+    const dateTime = String(formData.get("scheduledAt") ?? "");
+    await apiRequest(`/legal/cases/${caseId}/hearings`, {
+      method: "POST",
+      body: JSON.stringify({
+        title: String(formData.get("title") ?? ""),
+        scheduledAt: new Date(`${dateTime}:00-03:00`).toISOString(),
+        isClientVisible: formData.get("isClientVisible") === "on",
+        location: optional(formData, "location"),
+        notes: optional(formData, "notes"),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel agendar a audiencia.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?hearingCreated=1`);
+}
+
+export async function updateHearingStatus(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const hearingId = String(formData.get("hearingId") ?? "");
+  try {
+    await apiRequest(`/legal/cases/${caseId}/hearings/${hearingId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status: String(formData.get("status") ?? "COMPLETED"),
+        resolutionNote: optional(formData, "resolutionNote"),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel atualizar a audiencia.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?hearingUpdated=1`);
+}
+
+export async function uploadLegalDocument(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect(
+      `${path}?error=${encodeURIComponent("Selecione um arquivo para enviar.")}`,
+    );
+  }
+  const upload = new FormData();
+  upload.set("file", file);
+  upload.set("visibility", String(formData.get("visibility") ?? "INTERNAL"));
+  try {
+    await apiRequest(`/legal/cases/${caseId}/documents`, {
+      method: "POST",
+      body: upload,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel enviar o documento.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?documentCreated=1`);
+}
+
+export async function deleteLegalDocument(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const documentId = String(formData.get("documentId") ?? "");
+  try {
+    await apiRequest(`/legal/cases/${caseId}/documents/${documentId}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel excluir o documento.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?documentDeleted=1`);
+}
+
+export async function downloadLegalDocument(formData: FormData) {
+  const { caseId, path } = movementPath(formData);
+  const documentId = String(formData.get("documentId") ?? "");
+  let downloadUrl: string;
+  try {
+    const result = await apiRequest<{ url: string }>(
+      `/legal/cases/${caseId}/documents/${documentId}/download-url`,
+      { method: "POST" },
+    );
+    downloadUrl = result.url;
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel baixar o documento.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  redirect(downloadUrl);
+}
+
+export async function grantPortalAccess(formData: FormData) {
+  const partyId = String(formData.get("partyId") ?? "");
+  try {
+    await apiRequest("/portal/legal/party-links", {
+      method: "POST",
+      body: JSON.stringify({
+        partyId,
+        userId: String(formData.get("userId") ?? ""),
+      }),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Nao foi possivel liberar o portal.";
+    redirect(`/legal/people?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/legal/people");
+  redirect("/legal/people?portalLinked=1");
+}
+
+export async function revokePortalAccess(formData: FormData) {
+  const linkId = String(formData.get("linkId") ?? "");
+  try {
+    await apiRequest(`/portal/legal/party-links/${linkId}`, { method: "DELETE" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Nao foi possivel revogar o acesso.";
+    redirect(`/legal/people?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/legal/people");
+  redirect("/legal/people?portalRevoked=1");
+}
