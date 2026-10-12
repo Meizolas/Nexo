@@ -86,7 +86,7 @@
 - [x] Definir campos, participantes, estados, transições, autorização e exclusividade de ocupação dos contratos (OD-004B/012/022/023).
 - [x] Contratos e histórico de ocupação, com rascunho editável, transições auditadas, múltiplos locatários, responsável financeiro único e bloqueio concorrente de sobreposição no banco.
 - [x] Geração idempotente de cobranças recorrentes.
-- [ ] Multas, juros e descontos auditados.
+- [x] Multas, juros e descontos manuais, em valor fixo e auditados (cálculo automático permanece em OD-010).
 - [ ] Upload e análise de comprovantes.
 - [ ] Confirmação manual idempotente de pagamentos.
 - [ ] Recibos.

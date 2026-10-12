@@ -1,4 +1,11 @@
-import { ChargeStatus, ChargeType, LeaseStatus, Prisma } from '@prisma/client';
+import {
+  ChargeAdjustmentStatus,
+  ChargeAdjustmentType,
+  ChargeStatus,
+  ChargeType,
+  LeaseStatus,
+  Prisma,
+} from '@prisma/client';
 import type { PrismaService } from '../../database/prisma.service.js';
 import type { AuditService } from '../audit/audit.service.js';
 import { ChargesService } from './charges.service.js';
@@ -32,6 +39,7 @@ function charge() {
       },
       tenants: [],
     },
+    adjustments: [],
   };
 }
 
@@ -203,5 +211,170 @@ describe('ChargesService', () => {
       existingCount: 0,
       charges: [],
     });
+  });
+
+  it('adds an audited fixed adjustment and recalculates the total', async () => {
+    const adjustment = {
+      id: '66666666-6666-4666-8666-666666666666',
+      organizationId,
+      chargeId,
+      type: ChargeAdjustmentType.FINE,
+      amount: new Prisma.Decimal('125.50'),
+      reason: 'Multa prevista no contrato',
+      status: ChargeAdjustmentStatus.ACTIVE,
+      createdAt: new Date(),
+      canceledAt: null,
+    };
+    const updatedCharge = { ...charge(), adjustments: [adjustment] };
+    let auditData: unknown[] | undefined;
+    const tx = {
+      $queryRaw: async () => [{ id: chargeId }],
+      charge: {
+        findFirst: async () => charge(),
+        findFirstOrThrow: async () => updatedCharge,
+      },
+      chargeAdjustment: { create: async () => adjustment },
+    };
+    const prisma = {
+      withTransaction: async (
+        operation: (transaction: typeof tx) => Promise<unknown>,
+      ) => operation(tx),
+    } as unknown as PrismaService;
+    const audit = {
+      record: async (...args: unknown[]) => {
+        auditData = args;
+      },
+    } as unknown as AuditService;
+    const service = new ChargesService(prisma, audit);
+
+    const result = await service.addAdjustment(
+      organizationId,
+      chargeId,
+      {
+        type: ChargeAdjustmentType.FINE,
+        amount: '125.50',
+        reason: 'Multa prevista no contrato',
+      },
+      auditContext,
+    );
+
+    expect(result).toMatchObject({
+      fineAmount: new Prisma.Decimal('125.50'),
+      interestAmount: new Prisma.Decimal(0),
+      discountAmount: new Prisma.Decimal(0),
+      totalAmount: new Prisma.Decimal('2625.50'),
+    });
+    expect(auditData).toEqual([
+      expect.objectContaining({
+        action: 'CHARGE_ADJUSTMENT_ADDED',
+        entityId: adjustment.id,
+        newData: expect.objectContaining({ amount: '125.50' }),
+      }),
+      tx,
+    ]);
+  });
+
+  it('rejects a discount that would make the charge total negative', async () => {
+    const current = {
+      ...charge(),
+      adjustments: [
+        {
+          id: '66666666-6666-4666-8666-666666666666',
+          type: ChargeAdjustmentType.DISCOUNT,
+          amount: new Prisma.Decimal('2400.00'),
+          reason: 'Desconto anterior',
+          status: ChargeAdjustmentStatus.ACTIVE,
+          createdAt: new Date(),
+          canceledAt: null,
+        },
+      ],
+    };
+    let createCalled = false;
+    const tx = {
+      $queryRaw: async () => [{ id: chargeId }],
+      charge: { findFirst: async () => current },
+      chargeAdjustment: {
+        create: async () => {
+          createCalled = true;
+        },
+      },
+    };
+    const prisma = {
+      withTransaction: async (
+        operation: (transaction: typeof tx) => Promise<unknown>,
+      ) => operation(tx),
+    } as unknown as PrismaService;
+    const service = new ChargesService(prisma, {} as AuditService);
+
+    await expect(
+      service.addAdjustment(
+        organizationId,
+        chargeId,
+        {
+          type: ChargeAdjustmentType.DISCOUNT,
+          amount: '200.00',
+          reason: 'Desconto adicional',
+        },
+        auditContext,
+      ),
+    ).rejects.toMatchObject({
+      response: { code: 'CHARGE_DISCOUNT_EXCEEDS_TOTAL' },
+    });
+    expect(createCalled).toBe(false);
+  });
+
+  it('cancels an active adjustment without deleting its history', async () => {
+    const adjustment = {
+      id: '66666666-6666-4666-8666-666666666666',
+      organizationId,
+      chargeId,
+      type: ChargeAdjustmentType.INTEREST,
+      amount: new Prisma.Decimal('25.00'),
+      reason: 'Juros manual',
+      status: ChargeAdjustmentStatus.ACTIVE,
+      createdAt: new Date(),
+      canceledAt: null,
+    };
+    const canceled = {
+      ...adjustment,
+      status: ChargeAdjustmentStatus.CANCELED,
+      canceledAt: new Date(),
+    };
+    const tx = {
+      $queryRaw: async () => [{ id: chargeId }],
+      charge: {
+        findFirst: async () => ({ ...charge(), adjustments: [adjustment] }),
+        findFirstOrThrow: async () => ({
+          ...charge(),
+          adjustments: [canceled],
+        }),
+      },
+      chargeAdjustment: { updateMany: async () => ({ count: 1 }) },
+    };
+    const prisma = {
+      withTransaction: async (
+        operation: (transaction: typeof tx) => Promise<unknown>,
+      ) => operation(tx),
+    } as unknown as PrismaService;
+    let action: string | undefined;
+    const service = new ChargesService(prisma, {
+      record: async (input: { action: string }) => {
+        action = input.action;
+      },
+    } as unknown as AuditService);
+
+    const result = await service.cancelAdjustment(
+      organizationId,
+      chargeId,
+      adjustment.id,
+      auditContext,
+    );
+
+    expect(result).toMatchObject({
+      interestAmount: new Prisma.Decimal(0),
+      totalAmount: new Prisma.Decimal('2500.00'),
+      adjustments: [{ id: adjustment.id, status: 'CANCELED' }],
+    });
+    expect(action).toBe('CHARGE_ADJUSTMENT_CANCELED');
   });
 });

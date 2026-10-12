@@ -24,6 +24,8 @@ export default async function RecordDetailPage({
     activated?: string;
     canceled?: string;
     ended?: string;
+    adjusted?: string;
+    adjustmentCanceled?: string;
     error?: string;
   }>;
 }) {
@@ -34,7 +36,7 @@ export default async function RecordDetailPage({
   if (scope === "real-estate" && section === "contracts")
     return <ContractDetail leaseId={id} notice={query} />;
   if (scope === "real-estate" && section === "charges")
-    return <ChargeDetail chargeId={id} />;
+    return <ChargeDetail chargeId={id} notice={query} />;
   if (scope !== "legal" || section !== "cases") notFound();
   return <LegalCaseDetail caseId={id} notice={query} />;
 }

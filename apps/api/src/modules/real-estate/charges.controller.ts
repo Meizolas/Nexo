@@ -14,6 +14,7 @@ import { requestAuditContext } from '../../common/audit/request-audit-context.js
 import { ORGANIZATION_HEADER } from '../auth/auth.constants.js';
 import { RequirePermissions } from '../auth/auth.decorators.js';
 import { ChargesService } from './charges.service.js';
+import { AddChargeAdjustmentDto } from './dto/charge-adjustment.dto.js';
 import { GenerateChargesDto } from './dto/generate-charges.dto.js';
 import { ListChargesDto } from './dto/list-charges.dto.js';
 
@@ -47,5 +48,35 @@ export class ChargesController {
     @Req() request: Request,
   ) {
     return this.charges.findOne(request.organization.id, id);
+  }
+
+  @Post(':id/adjustments')
+  @RequirePermissions('real-estate.charges.adjust')
+  addAdjustment(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() input: AddChargeAdjustmentDto,
+    @Req() request: Request,
+  ) {
+    return this.charges.addAdjustment(
+      request.organization.id,
+      id,
+      input,
+      requestAuditContext(request),
+    );
+  }
+
+  @Post(':id/adjustments/:adjustmentId/cancel')
+  @RequirePermissions('real-estate.charges.adjust')
+  cancelAdjustment(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('adjustmentId', new ParseUUIDPipe()) adjustmentId: string,
+    @Req() request: Request,
+  ) {
+    return this.charges.cancelAdjustment(
+      request.organization.id,
+      id,
+      adjustmentId,
+      requestAuditContext(request),
+    );
   }
 }

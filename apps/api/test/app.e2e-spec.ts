@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
@@ -206,9 +207,10 @@ describe('AppController (e2e)', () => {
                   type: 'RENT',
                   competence: new Date('2026-10-01T00:00:00Z'),
                   dueDate: new Date('2026-10-10T00:00:00Z'),
-                  baseAmount: '2500.00',
+                  baseAmount: new Prisma.Decimal('2500.00'),
                   currency: 'BRL',
                   status: 'OPEN',
+                  adjustments: [],
                   lease: {
                     unit: {
                       id: 'unit-a',
@@ -398,6 +400,18 @@ describe('AppController (e2e)', () => {
       .set('x-organization-id', ORGANIZATION_A_ID)
       .expect(403);
     expect(denied.body.code).toBe('ACCESS_DENIED');
+
+    const adjustmentDenied = await request(app.getHttpServer())
+      .post(`/api/v1/real-estate/charges/${CHARGE_ID}/adjustments`)
+      .set('authorization', 'Bearer client-aal1')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .send({
+        type: 'FINE',
+        amount: '10.00',
+        reason: 'Sem permissão administrativa',
+      })
+      .expect(403);
+    expect(adjustmentDenied.body.code).toBe('ACCESS_DENIED');
   });
 
   it('lists leases only to an authorized real-estate organization member', async () => {

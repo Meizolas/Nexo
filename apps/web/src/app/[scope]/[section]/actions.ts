@@ -289,6 +289,54 @@ export async function generateRecurringCharges(formData: FormData) {
   );
 }
 
+function chargePath(formData: FormData) {
+  const chargeId = String(formData.get("chargeId") ?? "");
+  return { chargeId, path: `/real-estate/charges/${chargeId}` };
+}
+
+export async function addChargeAdjustment(formData: FormData) {
+  const { chargeId, path } = chargePath(formData);
+  try {
+    await apiRequest(`/real-estate/charges/${chargeId}/adjustments`, {
+      method: "POST",
+      body: JSON.stringify({
+        type: String(formData.get("type") ?? ""),
+        amount: String(formData.get("amount") ?? ""),
+        reason: String(formData.get("reason") ?? ""),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível registrar o ajuste.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  revalidatePath("/real-estate/charges");
+  redirect(`${path}?adjusted=1`);
+}
+
+export async function cancelChargeAdjustment(formData: FormData) {
+  const { chargeId, path } = chargePath(formData);
+  const adjustmentId = String(formData.get("adjustmentId") ?? "");
+  try {
+    await apiRequest(
+      `/real-estate/charges/${chargeId}/adjustments/${adjustmentId}/cancel`,
+      { method: "POST" },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cancelar o ajuste.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  revalidatePath("/real-estate/charges");
+  redirect(`${path}?adjustmentCanceled=1`);
+}
+
 export async function createLegalCase(formData: FormData) {
   try {
     await apiRequest("/legal/cases", {

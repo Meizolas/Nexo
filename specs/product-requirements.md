@@ -159,7 +159,10 @@ Critérios de aceite desta fatia:
 - A chave funcional de idempotência é organização, contrato, tipo e competência, protegida por constraint de unicidade no banco.
 - Repetir a geração da mesma competência retorna as cobranças existentes sem duplicá-las ou alterar seus valores.
 - O único tipo gerado nesta etapa é `RENT`. Tipos adicionais exigem regra funcional própria.
-- Multas, juros, descontos, reajustes e mudanças posteriores de valor não são calculados nesta etapa e continuam dependendo de regra aprovada e auditoria.
+- Multas, juros e descontos podem ser lançados manualmente como valores fixos positivos, sempre com motivo e auditoria; o total é `valor-base + multas + juros - descontos`.
+- Ajustes podem ser incluídos ou cancelados somente enquanto a cobrança estiver `OPEN`. Eles não são editados nem excluídos, preservando o histórico.
+- A soma dos descontos ativos não pode tornar o total negativo, inclusive após o cancelamento de uma multa ou juros. A operação usa trava da cobrança para manter essa regra sob concorrência.
+- Percentuais, cálculo por dias de atraso, reajustes e aplicação automática continuam dependendo de regra aprovada.
 
 Critérios de aceite desta fatia:
 
@@ -169,6 +172,8 @@ Critérios de aceite desta fatia:
 - repetir a mesma solicitação sem criar duplicidade nem alterar a cobrança já existente;
 - isolar geração, consulta e listagem pela organização efetiva;
 - auditar cada lote com competência, quantidade criada e quantidade já existente.
+- registrar e cancelar ajustes manuais sem apagar o histórico, recalculando o total com decimal;
+- rejeitar ajustes em cobrança não aberta e descontos que tornariam o total negativo.
 
 ### FR-RE-004 — Comprovantes e pagamentos
 

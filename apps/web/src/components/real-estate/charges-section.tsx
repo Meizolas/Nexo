@@ -11,6 +11,7 @@ interface Charge {
   competence: string;
   dueDate: string;
   baseAmount: string;
+  totalAmount: string;
   currency: string;
   status: string;
   isOverdue: boolean;
@@ -182,7 +183,7 @@ export async function ChargesSection({
                     ) : null}
                     <Badge>{statusLabel(charge.status)}</Badge>
                     <Badge>
-                      {formatMoney(charge.baseAmount, charge.currency)}
+                      {formatMoney(charge.totalAmount, charge.currency)}
                     </Badge>
                   </div>
                 </Link>

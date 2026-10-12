@@ -166,30 +166,46 @@ enum ChargeStatus {
   @@map("charge_status")
 }
 
+enum ChargeAdjustmentType {
+  FINE
+  INTEREST
+  DISCOUNT
+
+  @@map("charge_adjustment_type")
+}
+
+enum ChargeAdjustmentStatus {
+  ACTIVE
+  CANCELED
+
+  @@map("charge_adjustment_status")
+}
+
 model Organization {
-  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String             @db.VarChar(160)
-  slug           String             @unique @db.VarChar(80)
-  status         OrganizationStatus @default(ACTIVE)
-  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt      DateTime?          @map("deleted_at") @db.Timestamptz(3)
-  memberships    Membership[]
-  auditEvents    AuditEvent[]
-  parties        Party[]
-  documents      Document[]
-  notifications  Notification[]
-  legalCases     LegalCase[]
-  caseMovements  CaseMovement[]
-  legalDeadlines LegalDeadline[]
-  hearings       Hearing[]
-  partyUserLinks PartyUserLink[]
-  properties     Property[]
-  units          Unit[]
-  ownerships     Ownership[]
-  leases         Lease[]
-  leaseTenants   LeaseTenant[]
-  charges        Charge[]
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String             @db.VarChar(160)
+  slug              String             @unique @db.VarChar(80)
+  status            OrganizationStatus @default(ACTIVE)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(3)
+  memberships       Membership[]
+  auditEvents       AuditEvent[]
+  parties           Party[]
+  documents         Document[]
+  notifications     Notification[]
+  legalCases        LegalCase[]
+  caseMovements     CaseMovement[]
+  legalDeadlines    LegalDeadline[]
+  hearings          Hearing[]
+  partyUserLinks    PartyUserLink[]
+  properties        Property[]
+  units             Unit[]
+  ownerships        Ownership[]
+  leases            Lease[]
+  leaseTenants      LeaseTenant[]
+  charges           Charge[]
+  chargeAdjustments ChargeAdjustment[]
 
   @@index([status, deletedAt])
   @@map("organizations")
@@ -608,22 +624,41 @@ model LeaseTenant {
 }
 
 model Charge {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  leaseId        String       @map("lease_id") @db.Uuid
-  type           ChargeType   @default(RENT)
-  competence     DateTime     @db.Date
-  dueDate        DateTime     @map("due_date") @db.Date
-  baseAmount     Decimal      @map("base_amount") @db.Decimal(14, 2)
-  currency       String       @db.Char(3)
-  status         ChargeStatus @default(OPEN)
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  lease          Lease        @relation(fields: [organizationId, leaseId], references: [organizationId, id], onDelete: Restrict)
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  leaseId        String             @map("lease_id") @db.Uuid
+  type           ChargeType         @default(RENT)
+  competence     DateTime           @db.Date
+  dueDate        DateTime           @map("due_date") @db.Date
+  baseAmount     Decimal            @map("base_amount") @db.Decimal(14, 2)
+  currency       String             @db.Char(3)
+  status         ChargeStatus       @default(OPEN)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  lease          Lease              @relation(fields: [organizationId, leaseId], references: [organizationId, id], onDelete: Restrict)
+  adjustments    ChargeAdjustment[]
 
+  @@unique([organizationId, id])
   @@unique([organizationId, leaseId, type, competence])
   @@index([organizationId, status, dueDate])
   @@index([organizationId, competence, type])
   @@map("charges")
+}
+
+model ChargeAdjustment {
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  chargeId       String                 @map("charge_id") @db.Uuid
+  type           ChargeAdjustmentType
+  amount         Decimal                @db.Decimal(14, 2)
+  reason         String                 @db.VarChar(500)
+  status         ChargeAdjustmentStatus @default(ACTIVE)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  canceledAt     DateTime?              @map("canceled_at") @db.Timestamptz(3)
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  charge         Charge                 @relation(fields: [organizationId, chargeId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, chargeId, status, createdAt])
+  @@map("charge_adjustments")
 }

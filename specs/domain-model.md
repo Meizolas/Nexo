@@ -87,6 +87,7 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - `Lease`: contrato de uma unidade, com vigência, valor mensal, moeda, dia de vencimento e estado explícito.
 - `LeaseTenant`: vínculo histórico entre contrato e um ou mais `Party` com papel `TENANT`; exatamente um vínculo identifica o responsável financeiro principal.
 - `Charge`: obrigação financeira mensal que preserva tipo, competência, vencimento, valor-base, moeda e estado.
+- `ChargeAdjustment`: lançamento manual e histórico de multa, juros ou desconto, com valor fixo, motivo e estado ativo/cancelado.
 - `Payment`: liquidação total ou parcial, conforme decisão funcional.
 - `Receipt`: comprovante emitido pelo sistema após confirmação.
 - `MaintenanceRequest`: solicitação ligada ao contrato ou unidade.
@@ -109,6 +110,8 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - A combinação `organizationId + leaseId + type + competence` identifica uma cobrança recorrente e possui constraint de unicidade no banco.
 - A geração usa somente contratos `ACTIVE` cuja vigência intersecte o mês solicitado, copia valor/moeda do contrato e cria status `OPEN`.
 - Repetir uma geração não altera cobranças existentes; “vencida” é uma condição derivada de `OPEN` e `dueDate`.
+- O total da cobrança é o valor-base acrescido das multas e juros ativos e reduzido pelos descontos ativos, sem permitir resultado negativo.
+- Ajustes financeiros existem apenas como valor fixo manual, exigem motivo, só mudam enquanto a cobrança está aberta e são cancelados sem exclusão do histórico.
 - Confirmar novamente o mesmo pagamento com a mesma chave de idempotência retorna o resultado anterior.
 - Comprovante enviado é evidência para análise, não confirmação de pagamento.
 - Contratos encerrados ou cancelados não são removidos do histórico.
