@@ -84,7 +84,7 @@
 
 - [x] Cadastro base de proprietários/locatários, imóveis, unidades e histórico de propriedade (sem fração ideal; ver OD-020/021).
 - [x] Definir campos, participantes, estados, transições, autorização e exclusividade de ocupação dos contratos (OD-004B/012/022/023).
-- [ ] Contratos e histórico de ocupação.
+- [x] Contratos e histórico de ocupação, com rascunho editável, transições auditadas, múltiplos locatários, responsável financeiro único e bloqueio concorrente de sobreposição no banco.
 - [ ] Geração idempotente de cobranças recorrentes.
 - [ ] Multas, juros e descontos auditados.
 - [ ] Upload e análise de comprovantes.

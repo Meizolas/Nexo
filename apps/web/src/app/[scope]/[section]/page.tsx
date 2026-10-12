@@ -6,6 +6,7 @@ import { LegalCasesSection } from "@/components/legal/legal-cases-section";
 import { LegalClientsSection } from "@/components/legal/legal-clients-section";
 import { RealEstatePeopleSection } from "@/components/real-estate/real-estate-people-section";
 import { PropertiesSection } from "@/components/real-estate/properties-section";
+import { ContractsSection } from "@/components/real-estate/contracts-section";
 
 export default async function SectionPage({
   params,
@@ -45,6 +46,8 @@ export default async function SectionPage({
     return <RealEstatePeopleSection created={created === "1"} error={error} />;
   if (scope === "real-estate" && section === "properties")
     return <PropertiesSection created={created === "1"} error={error} />;
+  if (scope === "real-estate" && section === "contracts")
+    return <ContractsSection error={error} />;
   const Icon = item.icon;
 
   return (

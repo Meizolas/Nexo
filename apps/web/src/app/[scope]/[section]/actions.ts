@@ -150,6 +150,124 @@ export async function endPropertyOwnership(formData: FormData) {
   redirect(`${path}?ownerEnded=1`);
 }
 
+function leaseInput(formData: FormData) {
+  const responsiblePartyId = String(
+    formData.get("financialResponsiblePartyId") ?? "",
+  );
+  return {
+    unitId: String(formData.get("unitId") ?? ""),
+    tenants: formData.getAll("tenantPartyIds").map((value) => ({
+      partyId: String(value),
+      isFinancialResponsible: String(value) === responsiblePartyId,
+    })),
+    startDate: String(formData.get("startDate") ?? ""),
+    endDate: optional(formData, "endDate"),
+    monthlyRent: String(formData.get("monthlyRent") ?? ""),
+    currency: String(formData.get("currency") ?? "BRL"),
+    dueDay: Number(formData.get("dueDay")),
+  };
+}
+
+function leasePath(formData: FormData) {
+  const leaseId = String(formData.get("leaseId") ?? "");
+  return { leaseId, path: `/real-estate/contracts/${leaseId}` };
+}
+
+export async function createLease(formData: FormData) {
+  let leaseId: string;
+  try {
+    const lease = await apiRequest<{ id: string }>("/real-estate/leases", {
+      method: "POST",
+      body: JSON.stringify(leaseInput(formData)),
+    });
+    leaseId = lease.id;
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível criar o contrato.";
+    redirect(`/real-estate/contracts?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/real-estate/contracts");
+  redirect(`/real-estate/contracts/${leaseId}?created=1`);
+}
+
+export async function updateLease(formData: FormData) {
+  const { leaseId, path } = leasePath(formData);
+  try {
+    await apiRequest(`/real-estate/leases/${leaseId}`, {
+      method: "PATCH",
+      body: JSON.stringify(leaseInput(formData)),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível atualizar o contrato.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  revalidatePath("/real-estate/contracts");
+  redirect(`${path}?updated=1`);
+}
+
+export async function activateLease(formData: FormData) {
+  const { leaseId, path } = leasePath(formData);
+  try {
+    await apiRequest(`/real-estate/leases/${leaseId}/activate`, {
+      method: "POST",
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível ativar o contrato.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  revalidatePath("/real-estate/contracts");
+  redirect(`${path}?activated=1`);
+}
+
+export async function cancelLease(formData: FormData) {
+  const { leaseId, path } = leasePath(formData);
+  try {
+    await apiRequest(`/real-estate/leases/${leaseId}/cancel`, {
+      method: "POST",
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cancelar o contrato.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  revalidatePath("/real-estate/contracts");
+  redirect(`${path}?canceled=1`);
+}
+
+export async function endLease(formData: FormData) {
+  const { leaseId, path } = leasePath(formData);
+  try {
+    await apiRequest(`/real-estate/leases/${leaseId}/end`, {
+      method: "POST",
+      body: JSON.stringify({
+        endDate: String(formData.get("endDate") ?? ""),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível encerrar o contrato.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  revalidatePath("/real-estate/contracts");
+  redirect(`${path}?ended=1`);
+}
+
 export async function createLegalCase(formData: FormData) {
   try {
     await apiRequest("/legal/cases", {

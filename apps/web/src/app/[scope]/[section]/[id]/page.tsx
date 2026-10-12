@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { LegalCaseDetail } from "@/components/legal/legal-case-detail";
 import { PropertyDetail } from "@/components/real-estate/property-detail";
+import { ContractDetail } from "@/components/real-estate/contract-detail";
 
 export default async function RecordDetailPage({
   params,
@@ -19,6 +20,9 @@ export default async function RecordDetailPage({
     hearingUpdated?: string;
     documentCreated?: string;
     documentDeleted?: string;
+    activated?: string;
+    canceled?: string;
+    ended?: string;
     error?: string;
   }>;
 }) {
@@ -26,6 +30,8 @@ export default async function RecordDetailPage({
   const query = await searchParams;
   if (scope === "real-estate" && section === "properties")
     return <PropertyDetail propertyId={id} notice={query} />;
+  if (scope === "real-estate" && section === "contracts")
+    return <ContractDetail leaseId={id} notice={query} />;
   if (scope !== "legal" || section !== "cases") notFound();
   return <LegalCaseDetail caseId={id} notice={query} />;
 }
