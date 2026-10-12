@@ -4,13 +4,21 @@ import { notFound } from "next/navigation";
 import { isScopeKey, scopes } from "@/lib/scopes";
 import { LegalCasesSection } from "@/components/legal/legal-cases-section";
 import { LegalClientsSection } from "@/components/legal/legal-clients-section";
+import { RealEstatePeopleSection } from "@/components/real-estate/real-estate-people-section";
+import { PropertiesSection } from "@/components/real-estate/properties-section";
 
 export default async function SectionPage({
   params,
   searchParams,
 }: {
   params: Promise<{ scope: string; section: string }>;
-  searchParams: Promise<{ q?: string; created?: string; error?: string; portalLinked?: string; portalRevoked?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    created?: string;
+    error?: string;
+    portalLinked?: string;
+    portalRevoked?: string;
+  }>;
 }) {
   const { scope, section } = await params;
   const { q, created, error, portalLinked, portalRevoked } = await searchParams;
@@ -33,6 +41,10 @@ export default async function SectionPage({
         portalRevoked={portalRevoked === "1"}
       />
     );
+  if (scope === "real-estate" && section === "people")
+    return <RealEstatePeopleSection created={created === "1"} error={error} />;
+  if (scope === "real-estate" && section === "properties")
+    return <PropertiesSection created={created === "1"} error={error} />;
   const Icon = item.icon;
 
   return (

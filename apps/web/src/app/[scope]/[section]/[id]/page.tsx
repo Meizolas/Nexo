@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { LegalCaseDetail } from "@/components/legal/legal-case-detail";
+import { PropertyDetail } from "@/components/real-estate/property-detail";
 
 export default async function RecordDetailPage({
   params,
@@ -22,7 +23,9 @@ export default async function RecordDetailPage({
   }>;
 }) {
   const { scope, section, id } = await params;
-  if (scope !== "legal" || section !== "cases") notFound();
   const query = await searchParams;
+  if (scope === "real-estate" && section === "properties")
+    return <PropertyDetail propertyId={id} notice={query} />;
+  if (scope !== "legal" || section !== "cases") notFound();
   return <LegalCaseDetail caseId={id} notice={query} />;
 }

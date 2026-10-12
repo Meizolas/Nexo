@@ -115,8 +115,12 @@ A plataforma permite que uma organização execute operações jurídicas e imob
 
 ### FR-RE-001 — Pessoas e imóveis
 
-- Cadastrar proprietários, locatários, imóveis e unidades.
-- Manter vínculos históricos de propriedade e ocupação conforme as regras aprovadas.
+- Cadastrar pessoas/empresas com um ou ambos os papéis `OWNER` e `TENANT`.
+- Cadastrar imóvel com nome, tipo e endereço opcional; para o primeiro incremento, nome é o único campo obrigatório e tipo assume `RESIDENTIAL` por padrão.
+- Cada imóvel novo deve ter ao menos um proprietário já cadastrado com papel `OWNER` ativo na mesma organização.
+- Permitir vários proprietários atuais, encerramento auditado de vínculo e consulta ao histórico de titularidade; percentual/fração ideal ainda não é controlado.
+- Cadastrar unidades com nome único dentro do imóvel; um imóvel sem subdivisão pode usar uma unidade única.
+- Listas, imóveis, unidades e proprietários devem respeitar organização, permissões e exclusão lógica.
 
 ### FR-RE-002 — Contratos
 

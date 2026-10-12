@@ -11,6 +11,10 @@ const ORGANIZATION_A_ID = '11111111-1111-4111-8111-111111111111';
 const ORGANIZATION_B_ID = '22222222-2222-4222-8222-222222222222';
 const USER_ID = '33333333-3333-4333-8333-333333333333';
 const MEMBERSHIP_ID = '44444444-4444-4444-8444-444444444444';
+const CLIENT_USER_ID = '55555555-5555-4555-8555-555555555555';
+const CLIENT_PARTY_ID = '66666666-6666-4666-8666-666666666666';
+const LEGAL_CASE_ID = '77777777-7777-4777-8777-777777777777';
+const PROPERTY_ID = '88888888-8888-4888-8888-888888888888';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -18,12 +22,12 @@ describe('AppController (e2e)', () => {
   beforeEach(async () => {
     const tokenVerifier = {
       async verify(token: string) {
-        if (token !== 'valid-aal1' && token !== 'valid-aal2') {
+        if (!['valid-aal1', 'valid-aal2', 'client-aal1'].includes(token)) {
           throw new Error('Invalid token');
         }
 
         return {
-          userId: USER_ID,
+          userId: token === 'client-aal1' ? CLIENT_USER_ID : USER_ID,
           assuranceLevel: token === 'valid-aal2' ? 'aal2' : 'aal1',
           authenticationMethods: [token === 'valid-aal2' ? 'totp' : 'password'],
         };
@@ -32,26 +36,50 @@ describe('AppController (e2e)', () => {
     const prisma = {
       membership: {
         async findMany({ where }: { where: { userId: string } }) {
-          return where.userId === USER_ID
+          return where.userId === CLIENT_USER_ID
             ? [
                 {
-                  id: MEMBERSHIP_ID,
+                  id: 'client-membership',
                   isDefault: true,
                   organization: {
                     id: ORGANIZATION_A_ID,
                     name: 'Organização A',
                     slug: 'organizacao-a',
                   },
-                  roles: [{ role: 'ORG_ADMIN' }],
+                  roles: [{ role: 'CLIENT' }],
                 },
               ]
-            : [];
+            : where.userId === USER_ID
+              ? [
+                  {
+                    id: MEMBERSHIP_ID,
+                    isDefault: true,
+                    organization: {
+                      id: ORGANIZATION_A_ID,
+                      name: 'Organização A',
+                      slug: 'organizacao-a',
+                    },
+                    roles: [{ role: 'ORG_ADMIN' }],
+                  },
+                ]
+              : [];
         },
         async findFirst({
           where,
         }: {
           where: { organizationId: string; userId: string };
         }) {
+          if (
+            where.organizationId === ORGANIZATION_A_ID &&
+            where.userId === CLIENT_USER_ID
+          ) {
+            return {
+              id: 'client-membership',
+              grants: [],
+              roles: [{ role: 'CLIENT' }],
+              user: { platformRole: 'USER' },
+            };
+          }
           return where.organizationId === ORGANIZATION_A_ID &&
             where.userId === USER_ID
             ? {
@@ -62,6 +90,79 @@ describe('AppController (e2e)', () => {
               }
             : null;
         },
+      },
+      partyUserLink: {
+        async findMany({
+          where,
+        }: {
+          where: { organizationId: string; userId: string };
+        }) {
+          return where.organizationId === ORGANIZATION_A_ID &&
+            where.userId === CLIENT_USER_ID
+            ? [{ partyId: CLIENT_PARTY_ID }]
+            : [];
+        },
+      },
+      legalCase: {
+        async findMany({
+          where,
+        }: {
+          where: { parties?: { some?: { partyId?: { in?: string[] } } } };
+        }) {
+          const linkedPartyIds = where.parties?.some?.partyId?.in ?? [];
+          return linkedPartyIds.includes(CLIENT_PARTY_ID)
+            ? [
+                {
+                  id: LEGAL_CASE_ID,
+                  caseNumber: null,
+                  subject: 'Processo autorizado',
+                  clientSummary: 'Resumo publicado',
+                  tribunal: null,
+                  district: null,
+                  movements: [
+                    {
+                      id: 'movement-1',
+                      occurredAt: new Date('2026-10-01T12:00:00Z'),
+                      clientDescription: 'Movimentação publicada',
+                    },
+                  ],
+                  hearings: [],
+                  updatedAt: new Date('2026-10-01T12:00:00Z'),
+                },
+              ]
+            : [];
+        },
+      },
+      document: {
+        async findMany() {
+          return [];
+        },
+      },
+      property: {
+        async findMany({ where }: { where: { organizationId: string } }) {
+          return where.organizationId === ORGANIZATION_A_ID
+            ? [
+                {
+                  id: PROPERTY_ID,
+                  name: 'Imóvel da organização A',
+                  type: 'RESIDENTIAL',
+                  addressLine: null,
+                  city: null,
+                  state: null,
+                  postalCode: null,
+                  status: 'ACTIVE',
+                  units: [],
+                  ownerships: [],
+                },
+              ]
+            : [];
+        },
+        async count({ where }: { where: { organizationId: string } }) {
+          return where.organizationId === ORGANIZATION_A_ID ? 1 : 0;
+        },
+      },
+      async $transaction(queries: Promise<unknown>[]) {
+        return Promise.all(queries);
       },
       async $disconnect() {},
     };
@@ -176,6 +277,60 @@ describe('AppController (e2e)', () => {
       .expect(404);
 
     expect(response.body.code).toBe('RESOURCE_NOT_FOUND');
+
+    const propertyResponse = await request(app.getHttpServer())
+      .get(`/api/v1/real-estate/properties/${PROPERTY_ID}`)
+      .set('authorization', 'Bearer valid-aal2')
+      .set('x-organization-id', ORGANIZATION_B_ID)
+      .expect(404);
+    expect(propertyResponse.body.code).toBe('RESOURCE_NOT_FOUND');
+  });
+
+  it('returns only the portal process associated with the client party', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/portal/legal/cases')
+      .set('authorization', 'Bearer client-aal1')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .expect(200);
+
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({
+      id: LEGAL_CASE_ID,
+      subject: 'Processo autorizado',
+      movements: [{ clientDescription: 'Movimentação publicada' }],
+      hearings: [],
+      documents: [],
+    });
+  });
+
+  it('does not let a portal client manage client-to-user access links', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/portal/legal/party-links')
+      .set('authorization', 'Bearer client-aal1')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .expect(403);
+
+    expect(response.body.code).toBe('ACCESS_DENIED');
+  });
+
+  it('lists properties only to an authorized real-estate organization member', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/real-estate/properties')
+      .set('authorization', 'Bearer valid-aal2')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      data: [{ id: PROPERTY_ID, name: 'Imóvel da organização A' }],
+      meta: { totalItems: 1 },
+    });
+
+    const denied = await request(app.getHttpServer())
+      .get('/api/v1/real-estate/properties')
+      .set('authorization', 'Bearer client-aal1')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .expect(403);
+    expect(denied.body.code).toBe('ACCESS_DENIED');
   });
 
   afterEach(async () => {

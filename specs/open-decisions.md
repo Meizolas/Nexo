@@ -6,20 +6,22 @@ Este documento registra decisões aprovadas e pontos que ainda não podem ser im
 
 ## Decisões abertas
 
-| ID     | Decisão necessária                                                         | Marco limite | Impacto se adiada                  |
-| ------ | -------------------------------------------------------------------------- | ------------ | ---------------------------------- |
-| OD-004 | Quais campos são obrigatórios para processo e contrato?                    | 5            | Schema, formulários e validação.   |
-| OD-006 | Quais status e transições são permitidos para processo, prazo e audiência? | 5            | Regras jurídicas e notificações.   |
-| OD-008 | Quais prioridades tornam um prazo “crítico”?                               | 5            | Auditoria, UX e lembretes.         |
-| OD-009 | Pagamentos parciais, excedentes, estornos e cancelamentos entram no MVP?   | 6            | Modelo financeiro e recibos.       |
-| OD-010 | Fórmula e momento de multa, juros, desconto e reajuste.                    | 6            | Cálculo oficial de cobranças.      |
-| OD-011 | Qual chave funcional impede duplicidade de cobrança mensal?                | 6            | Constraint e idempotência.         |
-| OD-012 | Pode haver múltiplos locatários e responsáveis financeiros no contrato?    | 6            | Schema, cobrança e portal.         |
-| OD-013 | Quais estados e responsáveis compõem o fluxo de manutenção?                | 6            | Interface e autorização.           |
-| OD-014 | Qual provedor de e-mail será utilizado?                                    | 7            | Implementação e configuração.      |
-| OD-015 | Quais eventos geram mensagem e por quais canais?                           | 7            | Templates, consentimento e custos. |
-| OD-017 | Qual prazo de retenção se aplica a cada categoria de dado/documento?       | 8            | LGPD, exclusão e backups.          |
-| OD-018 | Onde serão hospedados web, API, Redis e jobs?                              | 8            | CI/CD, rede, custos e operação.    |
+| ID     | Decisão necessária                                                         | Marco limite | Impacto se adiada                                     |
+| ------ | -------------------------------------------------------------------------- | ------------ | ----------------------------------------------------- |
+| OD-004 | Quais campos são obrigatórios para processo e contrato?                    | 5            | Schema, formulários e validação.                      |
+| OD-006 | Quais status e transições são permitidos para processo, prazo e audiência? | 5            | Regras jurídicas e notificações.                      |
+| OD-008 | Quais prioridades tornam um prazo “crítico”?                               | 5            | Auditoria, UX e lembretes.                            |
+| OD-009 | Pagamentos parciais, excedentes, estornos e cancelamentos entram no MVP?   | 6            | Modelo financeiro e recibos.                          |
+| OD-010 | Fórmula e momento de multa, juros, desconto e reajuste.                    | 6            | Cálculo oficial de cobranças.                         |
+| OD-011 | Qual chave funcional impede duplicidade de cobrança mensal?                | 6            | Constraint e idempotência.                            |
+| OD-012 | Pode haver múltiplos locatários e responsáveis financeiros no contrato?    | 6            | Schema, cobrança e portal.                            |
+| OD-013 | Quais estados e responsáveis compõem o fluxo de manutenção?                | 6            | Interface e autorização.                              |
+| OD-014 | Qual provedor de e-mail será utilizado?                                    | 7            | Implementação e configuração.                         |
+| OD-015 | Quais eventos geram mensagem e por quais canais?                           | 7            | Templates, consentimento e custos.                    |
+| OD-017 | Qual prazo de retenção se aplica a cada categoria de dado/documento?       | 8            | LGPD, exclusão e backups.                             |
+| OD-018 | Onde serão hospedados web, API, Redis e jobs?                              | 8            | CI/CD, rede, custos e operação.                       |
+| OD-020 | Imóveis coproprietários exigem fração ideal/percentual para cada titular?  | 6            | Repasses, responsabilidades e relatórios financeiros. |
+| OD-021 | Quais dados cadastrais detalhados de imóvel/unidade são obrigatórios?      | 6            | Endereço, unidade, filtros e futuras integrações.     |
 
 ## Decisões tomadas
 

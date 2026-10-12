@@ -25,6 +25,7 @@ import { LegalDeadlinesModule } from './modules/legal-deadlines/legal-deadlines.
 import { HearingsModule } from './modules/hearings/hearings.module.js';
 import { LegalDocumentsModule } from './modules/legal-documents/legal-documents.module.js';
 import { LegalPortalModule } from './modules/legal-portal/legal-portal.module.js';
+import { RealEstateModule } from './modules/real-estate/real-estate.module.js';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { LegalPortalModule } from './modules/legal-portal/legal-portal.module.js
     HearingsModule,
     LegalDocumentsModule,
     LegalPortalModule,
+    RealEstateModule,
   ],
   controllers: [AppController],
   providers: [

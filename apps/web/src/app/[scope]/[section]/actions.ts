@@ -33,6 +33,123 @@ export async function createLegalClient(formData: FormData) {
   redirect("/legal/people?created=1");
 }
 
+export async function createRealEstatePerson(formData: FormData) {
+  const roles = formData
+    .getAll("roles")
+    .map(String)
+    .filter((role) => role === "OWNER" || role === "TENANT");
+  if (!roles.length)
+    redirect("/real-estate/people?error=Selecione%20ao%20menos%20um%20papel.");
+  try {
+    await apiRequest("/parties", {
+      method: "POST",
+      body: JSON.stringify({
+        type: String(formData.get("type") ?? "PERSON"),
+        name: String(formData.get("name") ?? ""),
+        taxId: optional(formData, "taxId"),
+        email: optional(formData, "email"),
+        phone: optional(formData, "phone"),
+        roles,
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cadastrar a pessoa.";
+    redirect(`/real-estate/people?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/real-estate/people");
+  redirect("/real-estate/people?created=1");
+}
+
+export async function createProperty(formData: FormData) {
+  try {
+    await apiRequest("/real-estate/properties", {
+      method: "POST",
+      body: JSON.stringify({
+        name: String(formData.get("name") ?? ""),
+        type: String(formData.get("type") ?? "RESIDENTIAL"),
+        addressLine: optional(formData, "addressLine"),
+        city: optional(formData, "city"),
+        state: optional(formData, "state"),
+        postalCode: optional(formData, "postalCode"),
+        ownerPartyIds: formData.getAll("ownerPartyIds").map(String),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cadastrar o imóvel.";
+    redirect(`/real-estate/properties?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/real-estate/properties");
+  redirect("/real-estate/properties?created=1");
+}
+
+function propertyPath(formData: FormData) {
+  const propertyId = String(formData.get("propertyId") ?? "");
+  return { propertyId, path: `/real-estate/properties/${propertyId}` };
+}
+
+export async function createPropertyUnit(formData: FormData) {
+  const { propertyId, path } = propertyPath(formData);
+  try {
+    await apiRequest(`/real-estate/properties/${propertyId}/units`, {
+      method: "POST",
+      body: JSON.stringify({ name: String(formData.get("name") ?? "") }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cadastrar a unidade.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?unitCreated=1`);
+}
+
+export async function addPropertyOwner(formData: FormData) {
+  const { propertyId, path } = propertyPath(formData);
+  try {
+    await apiRequest(`/real-estate/properties/${propertyId}/owners`, {
+      method: "POST",
+      body: JSON.stringify({ partyId: String(formData.get("partyId") ?? "") }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível associar o proprietário.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?ownerAdded=1`);
+}
+
+export async function endPropertyOwnership(formData: FormData) {
+  const { propertyId, path } = propertyPath(formData);
+  const ownershipId = String(formData.get("ownershipId") ?? "");
+  try {
+    await apiRequest(
+      `/real-estate/properties/${propertyId}/owners/${ownershipId}/end`,
+      {
+        method: "PATCH",
+      },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível encerrar o vínculo.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?ownerEnded=1`);
+}
+
 export async function createLegalCase(formData: FormData) {
   try {
     await apiRequest("/legal/cases", {
@@ -352,7 +469,10 @@ export async function grantPortalAccess(formData: FormData) {
       }),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Nao foi possivel liberar o portal.";
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel liberar o portal.";
     redirect(`/legal/people?error=${encodeURIComponent(message)}`);
   }
   revalidatePath("/legal/people");
@@ -362,9 +482,14 @@ export async function grantPortalAccess(formData: FormData) {
 export async function revokePortalAccess(formData: FormData) {
   const linkId = String(formData.get("linkId") ?? "");
   try {
-    await apiRequest(`/portal/legal/party-links/${linkId}`, { method: "DELETE" });
+    await apiRequest(`/portal/legal/party-links/${linkId}`, {
+      method: "DELETE",
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Nao foi possivel revogar o acesso.";
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel revogar o acesso.";
     redirect(`/legal/people?error=${encodeURIComponent(message)}`);
   }
   revalidatePath("/legal/people");

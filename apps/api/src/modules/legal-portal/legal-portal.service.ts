@@ -119,9 +119,12 @@ export class LegalPortalService {
     return cases.map((legalCase) => ({
       ...legalCase,
       documents: (documentsByCase.get(legalCase.id) ?? []).map(
-        ({ contextId: _contextId, sizeBytes, ...document }) => ({
-          ...document,
+        ({ id, originalName, mimeType, sizeBytes, createdAt }) => ({
+          id,
+          originalName,
+          mimeType,
           sizeBytes: Number(sizeBytes),
+          createdAt,
         }),
       ),
     }));

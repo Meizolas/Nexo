@@ -75,13 +75,14 @@
 - [x] Documentos jurídicos vinculados ao processo.
 - [x] Portal do cliente jurídico: consulta e download restritos por vínculo explícito, com gestão auditada de acesso, movimentações publicadas, audiências futuras visíveis e documentos autorizados.
 - [x] Upload privado do cliente (documentos `INTERNAL`) e solicitação de atendimento via notificação interna ao advogado ativo do processo.
-- [ ] Testes E2E do fluxo jurídico mínimo.
+- [x] E2E HTTP: portal vinculado ao cliente e autorização de imóveis (inclui negação para `CLIENT` e tenant alheio; Prisma substituído por mock).
+- [ ] E2E integrado ao PostgreSQL/storage e cobertura do fluxo jurídico mínimo completo.
 
 **Saída:** equipe jurídica e cliente executam os fluxos definidos no MVP.
 
 ## Marco 6 — Imobiliário
 
-- [ ] Proprietários, locatários, imóveis e unidades.
+- [x] Cadastro base de proprietários/locatários, imóveis, unidades e histórico de propriedade (sem fração ideal; ver OD-020/021).
 - [ ] Contratos e histórico de ocupação.
 - [ ] Geração idempotente de cobranças recorrentes.
 - [ ] Multas, juros e descontos auditados.

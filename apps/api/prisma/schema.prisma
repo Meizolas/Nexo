@@ -119,6 +119,30 @@ enum HearingStatus {
   @@map("hearing_status")
 }
 
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  LAND
+  MIXED_USE
+  OTHER
+
+  @@map("property_type")
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("property_status")
+}
+
+enum UnitStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("unit_status")
+}
+
 model Organization {
   id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String             @db.VarChar(160)
@@ -137,6 +161,9 @@ model Organization {
   legalDeadlines LegalDeadline[]
   hearings       Hearing[]
   partyUserLinks PartyUserLink[]
+  properties     Property[]
+  units          Unit[]
+  ownerships     Ownership[]
 
   @@index([status, deletedAt])
   @@map("organizations")
@@ -246,6 +273,7 @@ model Party {
   roles              PartyRole[]
   caseParticipations CaseParty[]
   portalLinks        PartyUserLink[]
+  ownerships         Ownership[]
 
   @@unique([organizationId, taxId])
   @@unique([organizationId, id])
@@ -451,4 +479,61 @@ model PartyUserLink {
   @@index([organizationId, userId, revokedAt])
   @@index([organizationId, partyId, revokedAt])
   @@map("party_user_links")
+}
+
+model Property {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(160)
+  type           PropertyType   @default(RESIDENTIAL)
+  addressLine    String?        @map("address_line") @db.VarChar(240)
+  city           String?        @db.VarChar(120)
+  state          String?        @db.Char(2)
+  postalCode     String?        @map("postal_code") @db.Char(8)
+  status         PropertyStatus @default(ACTIVE)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz(3)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  units          Unit[]
+  ownerships     Ownership[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, status, deletedAt, updatedAt])
+  @@index([organizationId, name])
+  @@map("properties")
+}
+
+model Unit {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  propertyId     String       @map("property_id") @db.Uuid
+  name           String       @db.VarChar(100)
+  status         UnitStatus   @default(ACTIVE)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  property       Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, propertyId, name])
+  @@index([organizationId, propertyId, status, deletedAt])
+  @@map("units")
+}
+
+model Ownership {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  propertyId     String       @map("property_id") @db.Uuid
+  partyId        String       @map("party_id") @db.Uuid
+  startedAt      DateTime     @default(now()) @map("started_at") @db.Timestamptz(3)
+  endedAt        DateTime?    @map("ended_at") @db.Timestamptz(3)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  property       Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  party          Party        @relation(fields: [partyId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, propertyId, endedAt])
+  @@index([organizationId, partyId, endedAt])
+  @@map("ownerships")
 }

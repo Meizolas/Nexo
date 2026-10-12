@@ -1,7 +1,7 @@
 # Modelo conceitual de domínio
 
-**Status:** Rascunho inicial  
-**Nota:** este documento descreve conceitos e invariantes; o schema Prisma será derivado apenas após validação das decisões abertas.
+**Status:** Modelo evolutivo do MVP  
+**Nota:** conceitos com decisões abertas permanecem limitados ao baseline seguro descrito nos requisitos até aprovação funcional.
 
 ## 1. Plataforma e identidade
 
@@ -81,9 +81,9 @@ Party (Owner) ──< Ownership >── Property ──< Unit
 Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceRequest
 ```
 
-- `Property`: imóvel administrado.
-- `Unit`: unidade locável; imóvel sem subdivisão pode possuir uma unidade única.
-- `Ownership`: vínculo histórico entre proprietário e imóvel/unidade.
+- `Property`: imóvel administrado, com nome, tipo, endereço básico opcional e estado operacional.
+- `Unit`: unidade locável com identificador único no imóvel; imóvel sem subdivisão pode possuir uma unidade única.
+- `Ownership`: vínculo histórico entre `Party` OWNER e `Property`, com datas de início/fim; aceita coproprietários, mas não guarda fração ideal enquanto a regra estiver aberta.
 - `Lease`: contrato com vigência, valor e regras de cobrança.
 - `LeaseTenant`: um ou mais locatários participantes.
 - `Charge`: obrigação financeira de uma competência.
@@ -92,6 +92,11 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - `MaintenanceRequest`: solicitação ligada ao contrato ou unidade.
 
 ### Invariantes imobiliárias
+
+- Um imóvel novo exige ao menos um vínculo com `Party` ativa de papel `OWNER` da mesma organização.
+- Encerrar um vínculo de propriedade define `endedAt` e preserva o histórico; não se exclui fisicamente.
+- Um mesmo proprietário não pode ter mais de um vínculo ativo repetido ao mesmo imóvel.
+- Unidades são identificadas por nome dentro do imóvel; ocupação e locação ficam para `Lease`.
 
 - Valores monetários usam decimal e moeda explícita quando necessário.
 - A combinação que identifica uma cobrança recorrente deve possuir constraint de unicidade no banco.

@@ -44,6 +44,8 @@ A gestão de vínculos usa `legal.portal-access.manage`: conceder ou reativar re
 
 Uma decisão de autorização deve avaliar, nesta ordem:
 
+Operações imobiliárias usam `real-estate.properties.read/create`, `real-estate.units.create` e `real-estate.ownership.manage`. Cada consulta/escrita valida a organização; proprietários vinculados precisam possuir `PartyRoleCode.OWNER` ativo na mesma organização.
+
 1. sessão e token válidos;
 2. vínculo ativo do usuário;
 3. organização efetiva;
