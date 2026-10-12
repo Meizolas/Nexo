@@ -58,6 +58,7 @@ interface LegalDeadline {
   title: string;
   description: string | null;
   dueAt: string;
+  isOverdue: boolean;
   priority: string;
   status: string;
   resolutionNote: string | null;
@@ -503,9 +504,7 @@ function Deadlines({
   members: OrganizationMember[];
 }) {
   const open = deadlines.filter((item) => item.status === "OPEN");
-  const overdue = open.filter(
-    (item) => new Date(item.dueAt).getTime() < Date.now(),
-  );
+  const overdue = open.filter((item) => item.isOverdue);
   return (
     <section className="space-y-4">
       <div>
@@ -591,10 +590,7 @@ function Deadlines({
             <Card
               key={item.id}
               className={
-                item.status === "OPEN" &&
-                new Date(item.dueAt).getTime() < Date.now()
-                  ? "border-red-300 bg-red-50/40"
-                  : ""
+                item.isOverdue ? "border-red-300 bg-red-50/40" : ""
               }
             >
               <CardContent className="flex flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
@@ -610,8 +606,7 @@ function Deadlines({
                             ? "Baixa"
                             : "Normal"}
                     </Badge>
-                    {item.status === "OPEN" &&
-                    new Date(item.dueAt).getTime() < Date.now() ? (
+                    {item.isOverdue ? (
                       <Badge className="border-red-200 bg-red-100 text-red-800">
                         Vencido
                       </Badge>

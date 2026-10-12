@@ -37,12 +37,16 @@ export class LegalDeadlinesService {
       ...(caseId ? { legalCaseId: caseId } : {}),
       ...(overdue ? { status: 'OPEN', dueAt: { lte: now } } : {}),
     };
-    return this.prisma.legalDeadline.findMany({
+    const deadlines = await this.prisma.legalDeadline.findMany({
       where,
       include,
       orderBy: [{ status: 'asc' }, { dueAt: 'asc' }],
       take: 200,
     });
+    return deadlines.map((deadline) => ({
+      ...deadline,
+      isOverdue: deadline.status === 'OPEN' && deadline.dueAt <= now,
+    }));
   }
 
   async create(
