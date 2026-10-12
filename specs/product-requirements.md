@@ -124,9 +124,30 @@ A plataforma permite que uma organização execute operações jurídicas e imob
 
 ### FR-RE-002 — Contratos
 
-- Registrar participantes, unidade, vigência, valor, dia de vencimento e status.
-- Contratos encerrados devem permanecer consultáveis no histórico.
-- Apenas um vínculo de ocupação incompatível pode estar ativo para a mesma unidade e período.
+- Um contrato deve pertencer à organização efetiva e referenciar uma unidade ativa da mesma organização.
+- Os campos obrigatórios são: unidade, ao menos um locatário, responsável financeiro, data inicial, valor mensal, moeda, dia de vencimento e status.
+- A data final é opcional para contratos por prazo indeterminado; quando informada, deve ser igual ou posterior à data inicial.
+- O valor mensal deve ser decimal positivo. A moeda usa código ISO 4217 e assume `BRL` no MVP.
+- O dia de vencimento deve estar entre 1 e 28, garantindo uma data válida em todos os meses.
+- Um contrato pode possuir vários locatários, todos `Party` ativos com papel `TENANT` na mesma organização.
+- Um locatário não pode aparecer repetido no mesmo contrato e exatamente um participante deve ser o responsável financeiro principal.
+- Os estados são `DRAFT`, `ACTIVE`, `ENDED` e `CANCELED`. As únicas transições aceitas são `DRAFT → ACTIVE`, `DRAFT → CANCELED` e `ACTIVE → ENDED`.
+- Todo contrato é criado em `DRAFT`; o cliente não pode ignorar a operação de ativação informando diretamente outro estado.
+- A ativação deve revalidar unidade, participantes, responsável financeiro, vigência e valor.
+- Contratos em rascunho não ocupam a unidade. Ao ativar, não pode existir outro contrato ativo da unidade cujo período de vigência se sobreponha, considerando data final ausente como prazo indeterminado.
+- Campos estruturais e financeiros podem ser editados diretamente apenas em rascunho. Mudanças posteriores exigem operação específica e auditada; reajustes serão tratados junto às regras financeiras.
+- Contratos encerrados ou cancelados são terminais, não podem ser reativados nem excluídos fisicamente e permanecem consultáveis no histórico.
+- Criação, edição, ativação, cancelamento e encerramento devem registrar auditoria com estado anterior e novo estado.
+
+Critérios de aceite desta fatia:
+
+- aceitar rascunho válido com um ou vários locatários e um único responsável financeiro;
+- rejeitar unidade ou participante inativo, inexistente ou pertencente a outra organização;
+- rejeitar participante sem papel `TENANT`, participante duplicado, nenhum responsável ou mais de um responsável financeiro;
+- rejeitar vigência, valor ou dia de vencimento inválido;
+- rejeitar transição de estado não permitida e alteração direta de contrato fora de `DRAFT`;
+- rejeitar ativação com período sobreposto a outro contrato ativo da unidade;
+- preservar e permitir consultar contratos `ENDED` e `CANCELED` no histórico da organização.
 
 ### FR-RE-003 — Cobranças
 

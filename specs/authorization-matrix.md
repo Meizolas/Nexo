@@ -42,9 +42,11 @@ Documentos enviados pelo cliente ficam `INTERNAL`; somente a equipe com permiss�
 
 A gestão de vínculos usa `legal.portal-access.manage`: conceder ou reativar requer `Party` ativa com papel `CLIENT` e usuário ativo com membership e papel `CLIENT` ativos na mesma organização. A revogação invalida o acesso imediatamente. Todas essas operações são auditadas.
 
-Uma decisão de autorização deve avaliar, nesta ordem:
+Operações imobiliárias usam `real-estate.properties.read/create`, `real-estate.units.create`, `real-estate.ownership.manage` e, para contratos, `real-estate.leases.read/create/update/activate/cancel/end`. Cada consulta/escrita valida a organização; proprietários vinculados precisam possuir `PartyRoleCode.OWNER` ativo, e participantes de contrato precisam possuir `PartyRoleCode.TENANT` ativo, sempre na mesma organização.
 
-Operações imobiliárias usam `real-estate.properties.read/create`, `real-estate.units.create` e `real-estate.ownership.manage`. Cada consulta/escrita valida a organização; proprietários vinculados precisam possuir `PartyRoleCode.OWNER` ativo na mesma organização.
+`ORG_ADMIN` e `REAL_ESTATE_MANAGER` recebem as permissões de contrato por padrão; `STAFF` depende de concessão explícita. `TENANT` não usa essas permissões administrativas: o futuro portal terá leitura própria e condicionada a vínculo ativo entre identidade, `Party` participante e contrato da organização. Ativar, cancelar ou encerrar contrato exige revalidação do estado e auditoria.
+
+Uma decisão de autorização deve avaliar, nesta ordem:
 
 1. sessão e token válidos;
 2. vínculo ativo do usuário;

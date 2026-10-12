@@ -84,8 +84,8 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - `Property`: imóvel administrado, com nome, tipo, endereço básico opcional e estado operacional.
 - `Unit`: unidade locável com identificador único no imóvel; imóvel sem subdivisão pode possuir uma unidade única.
 - `Ownership`: vínculo histórico entre `Party` OWNER e `Property`, com datas de início/fim; aceita coproprietários, mas não guarda fração ideal enquanto a regra estiver aberta.
-- `Lease`: contrato com vigência, valor e regras de cobrança.
-- `LeaseTenant`: um ou mais locatários participantes.
+- `Lease`: contrato de uma unidade, com vigência, valor mensal, moeda, dia de vencimento e estado explícito.
+- `LeaseTenant`: vínculo histórico entre contrato e um ou mais `Party` com papel `TENANT`; exatamente um vínculo identifica o responsável financeiro principal.
 - `Charge`: obrigação financeira de uma competência.
 - `Payment`: liquidação total ou parcial, conforme decisão funcional.
 - `Receipt`: comprovante emitido pelo sistema após confirmação.
@@ -97,12 +97,18 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - Encerrar um vínculo de propriedade define `endedAt` e preserva o histórico; não se exclui fisicamente.
 - Um mesmo proprietário não pode ter mais de um vínculo ativo repetido ao mesmo imóvel.
 - Unidades são identificadas por nome dentro do imóvel; ocupação e locação ficam para `Lease`.
-
+- Um contrato pertence à mesma organização de sua unidade e de todos os participantes.
+- Todo contrato possui ao menos um locatário ativo, sem participantes repetidos, e exatamente um responsável financeiro, que deve pertencer ao conjunto de locatários.
+- A vigência usa data inicial obrigatória e data final opcional; data final ausente representa prazo indeterminado.
+- O dia de vencimento fica entre 1 e 28 no MVP; valor mensal é decimal positivo e a moeda padrão é `BRL`.
+- `DRAFT` pode transicionar para `ACTIVE` ou `CANCELED`; `ACTIVE` pode transicionar apenas para `ENDED`; estados terminais não são reativados.
+- Apenas `ACTIVE` representa ocupação confirmada. A ativação é rejeitada quando o período se sobrepõe ao de outro contrato ativo da mesma unidade.
+- Dados estruturais e financeiros são editáveis diretamente somente em `DRAFT`; alterações posteriores usam operações específicas e auditadas.
 - Valores monetários usam decimal e moeda explícita quando necessário.
 - A combinação que identifica uma cobrança recorrente deve possuir constraint de unicidade no banco.
 - Confirmar novamente o mesmo pagamento com a mesma chave de idempotência retorna o resultado anterior.
 - Comprovante enviado é evidência para análise, não confirmação de pagamento.
-- Contratos encerrados não são removidos do histórico.
+- Contratos encerrados ou cancelados não são removidos do histórico.
 - Intervalos de ocupação incompatíveis não podem ser criados para a mesma unidade.
 - Recibo depende de pagamento confirmado e não pode ser reatribuído.
 
