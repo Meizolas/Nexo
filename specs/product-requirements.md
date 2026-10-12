@@ -151,10 +151,24 @@ Critérios de aceite desta fatia:
 
 ### FR-RE-003 — Cobranças
 
-- Registrar contrato, competência, vencimento, valor e status.
-- Valores monetários devem usar decimal.
-- A geração recorrente deve ser idempotente e impedir duplicidade para contrato, tipo e competência.
-- Multas, juros, descontos e mudanças de valor devem ser auditados.
+- Registrar organização, contrato, tipo, competência, vencimento, valor-base, moeda e status.
+- A competência usa o formato mensal `AAAA-MM` e representa o mês do vencimento; o vencimento combina o mês da competência com o dia definido no contrato.
+- Valores monetários usam decimal. A cobrança guarda um snapshot do aluguel mensal e da moeda vigentes no momento da geração.
+- Os estados são `OPEN`, `PAID` e `CANCELED`; a geração cria somente `OPEN`. “Vencida” é uma condição derivada quando a cobrança continua aberta após o vencimento.
+- A geração mensal considera somente contratos `ACTIVE` cuja vigência intersecte a competência solicitada.
+- A chave funcional de idempotência é organização, contrato, tipo e competência, protegida por constraint de unicidade no banco.
+- Repetir a geração da mesma competência retorna as cobranças existentes sem duplicá-las ou alterar seus valores.
+- O único tipo gerado nesta etapa é `RENT`. Tipos adicionais exigem regra funcional própria.
+- Multas, juros, descontos, reajustes e mudanças posteriores de valor não são calculados nesta etapa e continuam dependendo de regra aprovada e auditoria.
+
+Critérios de aceite desta fatia:
+
+- gerar uma cobrança aberta por contrato elegível para a competência;
+- calcular vencimento pelo dia configurado no contrato e copiar valor/moeda sem usar ponto flutuante;
+- ignorar contratos em rascunho, encerrados, cancelados ou fora da vigência da competência;
+- repetir a mesma solicitação sem criar duplicidade nem alterar a cobrança já existente;
+- isolar geração, consulta e listagem pela organização efetiva;
+- auditar cada lote com competência, quantidade criada e quantidade já existente.
 
 ### FR-RE-004 — Comprovantes e pagamentos
 

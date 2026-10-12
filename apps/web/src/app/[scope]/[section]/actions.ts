@@ -268,6 +268,27 @@ export async function endLease(formData: FormData) {
   redirect(`${path}?ended=1`);
 }
 
+export async function generateRecurringCharges(formData: FormData) {
+  const competence = String(formData.get("competence") ?? "");
+  let result: { createdCount: number; existingCount: number };
+  try {
+    result = await apiRequest("/real-estate/charges/generate", {
+      method: "POST",
+      body: JSON.stringify({ competence }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível gerar as cobranças.";
+    redirect(`/real-estate/charges?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/real-estate/charges");
+  redirect(
+    `/real-estate/charges?competence=${encodeURIComponent(competence)}&generated=${result.createdCount}&existing=${result.existingCount}`,
+  );
+}
+
 export async function createLegalCase(formData: FormData) {
   try {
     await apiRequest("/legal/cases", {

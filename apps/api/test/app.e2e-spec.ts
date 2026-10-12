@@ -16,6 +16,7 @@ const CLIENT_PARTY_ID = '66666666-6666-4666-8666-666666666666';
 const LEGAL_CASE_ID = '77777777-7777-4777-8777-777777777777';
 const PROPERTY_ID = '88888888-8888-4888-8888-888888888888';
 const LEASE_ID = '99999999-9999-4999-8999-999999999999';
+const CHARGE_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -186,6 +187,39 @@ describe('AppController (e2e)', () => {
                     },
                   },
                   tenants: [],
+                },
+              ]
+            : [];
+        },
+        async count({ where }: { where: { organizationId: string } }) {
+          return where.organizationId === ORGANIZATION_A_ID ? 1 : 0;
+        },
+      },
+      charge: {
+        async findMany({ where }: { where: { organizationId: string } }) {
+          return where.organizationId === ORGANIZATION_A_ID
+            ? [
+                {
+                  id: CHARGE_ID,
+                  organizationId: ORGANIZATION_A_ID,
+                  leaseId: LEASE_ID,
+                  type: 'RENT',
+                  competence: new Date('2026-10-01T00:00:00Z'),
+                  dueDate: new Date('2026-10-10T00:00:00Z'),
+                  baseAmount: '2500.00',
+                  currency: 'BRL',
+                  status: 'OPEN',
+                  lease: {
+                    unit: {
+                      id: 'unit-a',
+                      name: 'Apartamento 12',
+                      property: {
+                        id: PROPERTY_ID,
+                        name: 'Imóvel da organização A',
+                      },
+                    },
+                    tenants: [],
+                  },
                 },
               ]
             : [];
@@ -380,6 +414,26 @@ describe('AppController (e2e)', () => {
 
     const denied = await request(app.getHttpServer())
       .get('/api/v1/real-estate/leases')
+      .set('authorization', 'Bearer client-aal1')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .expect(403);
+    expect(denied.body.code).toBe('ACCESS_DENIED');
+  });
+
+  it('lists charges only to an authorized real-estate organization member', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/real-estate/charges')
+      .set('authorization', 'Bearer valid-aal2')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      data: [{ id: CHARGE_ID, type: 'RENT', status: 'OPEN' }],
+      meta: { totalItems: 1 },
+    });
+
+    const denied = await request(app.getHttpServer())
+      .get('/api/v1/real-estate/charges')
       .set('authorization', 'Bearer client-aal1')
       .set('x-organization-id', ORGANIZATION_A_ID)
       .expect(403);

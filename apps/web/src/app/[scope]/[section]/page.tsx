@@ -7,6 +7,7 @@ import { LegalClientsSection } from "@/components/legal/legal-clients-section";
 import { RealEstatePeopleSection } from "@/components/real-estate/real-estate-people-section";
 import { PropertiesSection } from "@/components/real-estate/properties-section";
 import { ContractsSection } from "@/components/real-estate/contracts-section";
+import { ChargesSection } from "@/components/real-estate/charges-section";
 
 export default async function SectionPage({
   params,
@@ -19,10 +20,22 @@ export default async function SectionPage({
     error?: string;
     portalLinked?: string;
     portalRevoked?: string;
+    competence?: string;
+    generated?: string;
+    existing?: string;
   }>;
 }) {
   const { scope, section } = await params;
-  const { q, created, error, portalLinked, portalRevoked } = await searchParams;
+  const {
+    q,
+    created,
+    error,
+    portalLinked,
+    portalRevoked,
+    competence,
+    generated,
+    existing,
+  } = await searchParams;
   if (!isScopeKey(scope)) notFound();
   const item = scopes[scope].navigation.find(
     (candidate) => candidate.section === section,
@@ -48,6 +61,15 @@ export default async function SectionPage({
     return <PropertiesSection created={created === "1"} error={error} />;
   if (scope === "real-estate" && section === "contracts")
     return <ContractsSection error={error} />;
+  if (scope === "real-estate" && section === "charges")
+    return (
+      <ChargesSection
+        competence={competence}
+        generated={generated}
+        existing={existing}
+        error={error}
+      />
+    );
   const Icon = item.icon;
 
   return (

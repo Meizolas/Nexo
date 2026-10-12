@@ -13,7 +13,6 @@ Este documento registra decisões aprovadas e pontos que ainda não podem ser im
 | OD-008 | Quais prioridades tornam um prazo “crítico”?                               | 5            | Auditoria, UX e lembretes.                            |
 | OD-009 | Pagamentos parciais, excedentes, estornos e cancelamentos entram no MVP?   | 6            | Modelo financeiro e recibos.                          |
 | OD-010 | Fórmula e momento de multa, juros, desconto e reajuste.                    | 6            | Cálculo oficial de cobranças.                         |
-| OD-011 | Qual chave funcional impede duplicidade de cobrança mensal?                | 6            | Constraint e idempotência.                            |
 | OD-013 | Quais estados e responsáveis compõem o fluxo de manutenção?                | 6            | Interface e autorização.                              |
 | OD-014 | Qual provedor de e-mail será utilizado?                                    | 7            | Implementação e configuração.                         |
 | OD-015 | Quais eventos geram mensagem e por quais canais?                           | 7            | Templates, consentimento e custos.                    |
@@ -39,6 +38,8 @@ Este documento registra decisões aprovadas e pontos que ainda não podem ser im
 | OD-016  | Arquivos permitidos          | Uploads aceitam PDF, JPEG, PNG, WebP e DOCX, com limite máximo de 20 MB por arquivo e validação do conteúdo real.                                                                    |
 | OD-022  | Estados do contrato          | Estados: `DRAFT`, `ACTIVE`, `ENDED` e `CANCELED`; transições: rascunho para ativo/cancelado e ativo para encerrado, sem reativação de estados terminais.                             |
 | OD-023  | Exclusividade de ocupação    | Rascunhos não ocupam unidade; a ativação rejeita sobreposição com outro contrato ativo da mesma unidade, tratando vigência sem data final como indeterminada.                        |
+| OD-011  | Idempotência de cobrança     | A chave funcional é `organizationId + leaseId + type + competence`, protegida por unicidade no banco; repetição retorna o registro existente sem alterar seu snapshot financeiro.    |
+| OD-024  | Competência e vencimento     | A competência representa o mês do vencimento (`AAAA-MM`); o vencimento usa o dia 1–28 do contrato no mesmo mês. “Vencida” é condição derivada, não status persistido.                |
 
 ## Premissas provisórias seguras
 

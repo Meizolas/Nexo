@@ -86,7 +86,7 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - `Ownership`: vínculo histórico entre `Party` OWNER e `Property`, com datas de início/fim; aceita coproprietários, mas não guarda fração ideal enquanto a regra estiver aberta.
 - `Lease`: contrato de uma unidade, com vigência, valor mensal, moeda, dia de vencimento e estado explícito.
 - `LeaseTenant`: vínculo histórico entre contrato e um ou mais `Party` com papel `TENANT`; exatamente um vínculo identifica o responsável financeiro principal.
-- `Charge`: obrigação financeira de uma competência.
+- `Charge`: obrigação financeira mensal que preserva tipo, competência, vencimento, valor-base, moeda e estado.
 - `Payment`: liquidação total ou parcial, conforme decisão funcional.
 - `Receipt`: comprovante emitido pelo sistema após confirmação.
 - `MaintenanceRequest`: solicitação ligada ao contrato ou unidade.
@@ -105,7 +105,10 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - Apenas `ACTIVE` representa ocupação confirmada. A ativação é rejeitada quando o período se sobrepõe ao de outro contrato ativo da mesma unidade.
 - Dados estruturais e financeiros são editáveis diretamente somente em `DRAFT`; alterações posteriores usam operações específicas e auditadas.
 - Valores monetários usam decimal e moeda explícita quando necessário.
-- A combinação que identifica uma cobrança recorrente deve possuir constraint de unicidade no banco.
+- A competência da cobrança é o primeiro dia do mês de referência e é apresentada como `AAAA-MM`; o vencimento usa o dia configurado no contrato dentro desse mesmo mês.
+- A combinação `organizationId + leaseId + type + competence` identifica uma cobrança recorrente e possui constraint de unicidade no banco.
+- A geração usa somente contratos `ACTIVE` cuja vigência intersecte o mês solicitado, copia valor/moeda do contrato e cria status `OPEN`.
+- Repetir uma geração não altera cobranças existentes; “vencida” é uma condição derivada de `OPEN` e `dueDate`.
 - Confirmar novamente o mesmo pagamento com a mesma chave de idempotência retorna o resultado anterior.
 - Comprovante enviado é evidência para análise, não confirmação de pagamento.
 - Contratos encerrados ou cancelados não são removidos do histórico.

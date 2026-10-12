@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { LegalCaseDetail } from "@/components/legal/legal-case-detail";
 import { PropertyDetail } from "@/components/real-estate/property-detail";
 import { ContractDetail } from "@/components/real-estate/contract-detail";
+import { ChargeDetail } from "@/components/real-estate/charge-detail";
 
 export default async function RecordDetailPage({
   params,
@@ -32,6 +33,8 @@ export default async function RecordDetailPage({
     return <PropertyDetail propertyId={id} notice={query} />;
   if (scope === "real-estate" && section === "contracts")
     return <ContractDetail leaseId={id} notice={query} />;
+  if (scope === "real-estate" && section === "charges")
+    return <ChargeDetail chargeId={id} />;
   if (scope !== "legal" || section !== "cases") notFound();
   return <LegalCaseDetail caseId={id} notice={query} />;
 }
