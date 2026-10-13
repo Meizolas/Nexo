@@ -59,7 +59,7 @@ export function AppShell({
       style={style}
       className="min-h-screen bg-[var(--content-surface)] lg:grid lg:grid-cols-[264px_1fr]"
     >
-      <aside className="sticky top-0 z-40 hidden h-screen w-[280px] overflow-hidden rounded-r-[32px] bg-[var(--sidebar)] text-white shadow-xl shadow-slate-950/20 lg:flex lg:flex-col">
+      <aside className="sticky top-0 z-40 hidden h-screen w-[280px] overflow-hidden rounded-r-[32px] bg-[var(--sidebar)] text-white lg:flex lg:flex-col">
         <Brand scope={scope} />
         <Navigation scope={scope} pathname={pathname} />
         <div className="mt-auto border-t border-white/10 bg-black/5 p-4">
