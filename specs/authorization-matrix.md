@@ -42,11 +42,13 @@ Documentos enviados pelo cliente ficam `INTERNAL`; somente a equipe com permiss�
 
 A gestão de vínculos usa `legal.portal-access.manage`: conceder ou reativar requer `Party` ativa com papel `CLIENT` e usuário ativo com membership e papel `CLIENT` ativos na mesma organização. A revogação invalida o acesso imediatamente. Todas essas operações são auditadas.
 
-Operações imobiliárias usam `real-estate.properties.read/create`, `real-estate.units.create`, `real-estate.ownership.manage`; contratos usam `real-estate.leases.read/create/update/activate/cancel/end`; cobranças usam `real-estate.charges.read/generate/adjust`. Cada consulta/escrita valida a organização; proprietários vinculados precisam possuir `PartyRoleCode.OWNER` ativo, e participantes de contrato precisam possuir `PartyRoleCode.TENANT` ativo, sempre na mesma organização.
+Operações imobiliárias usam `real-estate.properties.read/create`, `real-estate.units.create`, `real-estate.ownership.manage`; contratos usam `real-estate.leases.read/create/update/activate/cancel/end`; cobranças usam `real-estate.charges.read/generate/adjust`; comprovantes usam `real-estate.payment-proofs.read/upload/review`. Cada consulta/escrita valida a organização; proprietários vinculados precisam possuir `PartyRoleCode.OWNER` ativo, e participantes de contrato precisam possuir `PartyRoleCode.TENANT` ativo, sempre na mesma organização.
 
 `ORG_ADMIN` e `REAL_ESTATE_MANAGER` recebem as permissões de contrato por padrão; `STAFF` depende de concessão explícita. `TENANT` não usa essas permissões administrativas: o futuro portal terá leitura própria e condicionada a vínculo ativo entre identidade, `Party` participante e contrato da organização. Ativar, cancelar ou encerrar contrato exige revalidação do estado e auditoria.
 
 Geração e ajustes de cobranças são operações administrativas e auditadas de `ORG_ADMIN` ou `REAL_ESTATE_MANAGER`; `STAFF` depende de concessão explícita. O futuro portal do locatário usará permissão própria e vínculo com `LeaseTenant`, sem receber `real-estate.charges.read` administrativo.
+
+Upload, download e análise administrativa de comprovantes seguem as mesmas funções e são auditados. O futuro envio pelo locatário terá permissão de portal e validação de vínculo, sem conceder a permissão administrativa de análise.
 
 Uma decisão de autorização deve avaliar, nesta ordem:
 

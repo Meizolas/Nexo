@@ -26,6 +26,8 @@ export default async function RecordDetailPage({
     ended?: string;
     adjusted?: string;
     adjustmentCanceled?: string;
+    proofUploaded?: string;
+    proofReviewed?: string;
     error?: string;
   }>;
 }) {

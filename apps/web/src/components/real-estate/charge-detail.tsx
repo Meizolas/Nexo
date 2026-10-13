@@ -2,8 +2,10 @@ import { Badge, Card, CardContent } from "@platform/ui";
 import {
   ArrowLeft,
   CircleDollarSign,
+  Download,
   FileText,
   Plus,
+  Upload,
   UserRound,
   XCircle,
 } from "lucide-react";
@@ -13,6 +15,9 @@ import type { ReactNode } from "react";
 import {
   addChargeAdjustment,
   cancelChargeAdjustment,
+  downloadPaymentProof,
+  reviewPaymentProof,
+  uploadPaymentProof,
 } from "@/app/[scope]/[section]/actions";
 import { apiRequest, ApiRequestError } from "@/lib/api";
 
@@ -39,6 +44,20 @@ interface Charge {
     createdAt: string;
     canceledAt?: string;
   }>;
+  paymentProofs: Array<{
+    id: string;
+    status: "PENDING" | "ACCEPTED" | "REJECTED";
+    reviewNote?: string;
+    reviewedAt?: string;
+    createdAt: string;
+    reviewedBy?: { id: string; displayName: string };
+    document: {
+      id: string;
+      originalName: string;
+      sizeBytes: number;
+      mimeType: string;
+    };
+  }>;
   lease: {
     id: string;
     unit: {
@@ -57,7 +76,13 @@ export async function ChargeDetail({
   notice,
 }: {
   chargeId: string;
-  notice?: { adjusted?: string; adjustmentCanceled?: string; error?: string };
+  notice?: {
+    adjusted?: string;
+    adjustmentCanceled?: string;
+    proofUploaded?: string;
+    proofReviewed?: string;
+    error?: string;
+  };
 }) {
   let charge: Charge;
   try {
@@ -86,6 +111,12 @@ export async function ChargeDetail({
       ) : null}
       {notice?.adjustmentCanceled === "1" ? (
         <Notice>Ajuste cancelado sem apagar o histórico.</Notice>
+      ) : null}
+      {notice?.proofUploaded === "1" ? (
+        <Notice>Comprovante enviado para análise.</Notice>
+      ) : null}
+      {notice?.proofReviewed === "1" ? (
+        <Notice>Comprovante analisado. A cobrança permanece aberta.</Notice>
       ) : null}
       {notice?.error ? <Notice error>{notice.error}</Notice> : null}
       <header className="rounded-3xl bg-[#561829] p-7 text-white sm:p-9">
@@ -266,6 +297,95 @@ export async function ChargeDetail({
           )}
         </CardContent>
       </Card>
+      <Card>
+        <CardContent className="p-0">
+          <div className="border-b p-5">
+            <h2 className="font-semibold">Comprovantes de pagamento</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Aceitar um comprovante não confirma o pagamento automaticamente.
+            </p>
+            {charge.status === "OPEN" ? (
+              <form
+                action={uploadPaymentProof}
+                className="mt-4 flex flex-wrap gap-3"
+              >
+                <input type="hidden" name="chargeId" value={charge.id} />
+                <input
+                  type="file"
+                  name="file"
+                  required
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.docx"
+                  className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm"
+                />
+                <button className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white">
+                  <Upload className="size-4" /> Enviar
+                </button>
+              </form>
+            ) : null}
+          </div>
+          {charge.paymentProofs.length ? (
+            <div className="divide-y">
+              {charge.paymentProofs.map((proof) => (
+                <div key={proof.id} className="space-y-3 p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">
+                        {proof.document.originalName}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {formatFileSize(proof.document.sizeBytes)} · enviado em{" "}
+                        {formatDateTime(proof.createdAt)}
+                      </p>
+                      {proof.reviewNote ? (
+                        <p className="mt-2 text-sm text-slate-600">
+                          Observação: {proof.reviewNote}
+                        </p>
+                      ) : null}
+                    </div>
+                    <Badge>{proofStatusLabel(proof.status)}</Badge>
+                    <form action={downloadPaymentProof}>
+                      <input type="hidden" name="chargeId" value={charge.id} />
+                      <input type="hidden" name="proofId" value={proof.id} />
+                      <button className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold">
+                        <Download className="size-4" /> Baixar
+                      </button>
+                    </form>
+                  </div>
+                  {proof.status === "PENDING" ? (
+                    <form
+                      action={reviewPaymentProof}
+                      className="grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-[10rem_1fr_auto]"
+                    >
+                      <input type="hidden" name="chargeId" value={charge.id} />
+                      <input type="hidden" name="proofId" value={proof.id} />
+                      <select
+                        name="status"
+                        className="rounded-lg border px-3 py-2 text-sm"
+                      >
+                        <option value="ACCEPTED">Aceitar</option>
+                        <option value="REJECTED">Rejeitar</option>
+                      </select>
+                      <input
+                        name="note"
+                        maxLength={500}
+                        placeholder="Observação (obrigatória ao rejeitar)"
+                        className="rounded-lg border px-3 py-2 text-sm"
+                      />
+                      <button className="rounded-lg border px-4 py-2 text-sm font-semibold">
+                        Registrar análise
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="p-8 text-center text-sm text-slate-500">
+              Nenhum comprovante enviado.
+            </p>
+          )}
+        </CardContent>
+      </Card>
       <p className="text-xs text-slate-500">
         Gerada em {formatDateTime(charge.createdAt)}. O valor é o snapshot do
         aluguel no momento da geração.
@@ -302,6 +422,17 @@ function adjustmentLabel(type: Charge["adjustments"][number]["type"]) {
   if (type === "FINE") return "Multa";
   if (type === "INTEREST") return "Juros";
   return "Desconto";
+}
+
+function proofStatusLabel(status: Charge["paymentProofs"][number]["status"]) {
+  if (status === "PENDING") return "Pendente";
+  if (status === "ACCEPTED") return "Aceito";
+  return "Rejeitado";
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024 * 1024) return `${Math.ceil(size / 1024)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function Notice({

@@ -42,6 +42,13 @@ const chargeInclude = {
     },
   },
   adjustments: { orderBy: [{ createdAt: 'desc' as const }] },
+  paymentProofs: {
+    include: {
+      document: true,
+      reviewedBy: { select: { id: true, displayName: true } },
+    },
+    orderBy: [{ createdAt: 'desc' as const }],
+  },
 } satisfies Prisma.ChargeInclude;
 
 @Injectable()
@@ -326,6 +333,9 @@ export class ChargesService {
         amount: Prisma.Decimal;
         status: ChargeAdjustmentStatus;
       }>;
+      paymentProofs: Array<{
+        document: { sizeBytes: bigint };
+      }>;
     },
   >(charges: T[]) {
     const today = this.todayInBusinessTimezone();
@@ -333,6 +343,13 @@ export class ChargesService {
       const summary = this.financialSummary(charge);
       return {
         ...charge,
+        paymentProofs: charge.paymentProofs.map((proof) => ({
+          ...proof,
+          document: {
+            ...proof.document,
+            sizeBytes: Number(proof.document.sizeBytes),
+          },
+        })),
         ...summary,
         isOverdue:
           charge.status === ChargeStatus.OPEN && charge.dueDate < today,

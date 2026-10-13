@@ -41,6 +41,7 @@ Este documento registra decisões aprovadas e pontos que ainda não podem ser im
 | OD-011  | Idempotência de cobrança     | A chave funcional é `organizationId + leaseId + type + competence`, protegida por unicidade no banco; repetição retorna o registro existente sem alterar seu snapshot financeiro.         |
 | OD-024  | Competência e vencimento     | A competência representa o mês do vencimento (`AAAA-MM`); o vencimento usa o dia 1–28 do contrato no mesmo mês. “Vencida” é condição derivada, não status persistido.                     |
 | OD-025  | Ajustes financeiros no MVP   | Multa, juros e desconto são lançamentos manuais de valor fixo com motivo; total = base + multa + juros - desconto. Ajustes só mudam em cobrança aberta e cancelamento preserva histórico. |
+| OD-026  | Análise de comprovantes      | Estados `PENDING`, `ACCEPTED` e `REJECTED`; decisão única e auditada, rejeição com motivo e sem confirmação automática do pagamento.                                                      |
 
 ## Premissas provisórias seguras
 

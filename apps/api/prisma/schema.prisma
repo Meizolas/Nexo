@@ -181,6 +181,14 @@ enum ChargeAdjustmentStatus {
   @@map("charge_adjustment_status")
 }
 
+enum PaymentProofStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+
+  @@map("payment_proof_status")
+}
+
 model Organization {
   id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name              String             @db.VarChar(160)
@@ -206,31 +214,33 @@ model Organization {
   leaseTenants      LeaseTenant[]
   charges           Charge[]
   chargeAdjustments ChargeAdjustment[]
+  paymentProofs     PaymentProof[]
 
   @@index([status, deletedAt])
   @@map("organizations")
 }
 
 model User {
-  id                   String                 @id @db.Uuid
-  email                String                 @unique @db.VarChar(320)
-  displayName          String                 @map("display_name") @db.VarChar(160)
-  status               UserStatus             @default(ACTIVE)
-  platformRole         PlatformRole           @default(USER) @map("platform_role")
-  lastAuthenticatedAt  DateTime?              @map("last_authenticated_at") @db.Timestamptz(3)
-  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
-  memberships          Membership[]
-  auditEvents          AuditEvent[]           @relation("AuditActor")
-  uploadedDocuments    Document[]             @relation("DocumentUploader")
-  notifications        Notification[]         @relation("NotificationRecipient")
-  legalCaseAssignments CaseLawyerAssignment[]
-  createdCaseMovements CaseMovement[]         @relation("MovementCreator")
-  publishedMovements   CaseMovement[]         @relation("MovementPublisher")
-  assignedDeadlines    LegalDeadline[]        @relation("DeadlineAssignee")
-  completedDeadlines   LegalDeadline[]        @relation("DeadlineCompleter")
-  portalPartyLinks     PartyUserLink[]        @relation("PortalPartyUser")
-  grantedPortalLinks   PartyUserLink[]        @relation("PortalLinkGrantor")
+  id                    String                 @id @db.Uuid
+  email                 String                 @unique @db.VarChar(320)
+  displayName           String                 @map("display_name") @db.VarChar(160)
+  status                UserStatus             @default(ACTIVE)
+  platformRole          PlatformRole           @default(USER) @map("platform_role")
+  lastAuthenticatedAt   DateTime?              @map("last_authenticated_at") @db.Timestamptz(3)
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  memberships           Membership[]
+  auditEvents           AuditEvent[]           @relation("AuditActor")
+  uploadedDocuments     Document[]             @relation("DocumentUploader")
+  notifications         Notification[]         @relation("NotificationRecipient")
+  legalCaseAssignments  CaseLawyerAssignment[]
+  createdCaseMovements  CaseMovement[]         @relation("MovementCreator")
+  publishedMovements    CaseMovement[]         @relation("MovementPublisher")
+  assignedDeadlines     LegalDeadline[]        @relation("DeadlineAssignee")
+  completedDeadlines    LegalDeadline[]        @relation("DeadlineCompleter")
+  portalPartyLinks      PartyUserLink[]        @relation("PortalPartyUser")
+  grantedPortalLinks    PartyUserLink[]        @relation("PortalLinkGrantor")
+  reviewedPaymentProofs PaymentProof[]         @relation("PaymentProofReviewer")
 
   @@index([status])
   @@map("users")
@@ -354,6 +364,7 @@ model Document {
   deletedAt        DateTime?          @map("deleted_at") @db.Timestamptz(3)
   organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   uploadedBy       User               @relation("DocumentUploader", fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  paymentProof     PaymentProof?
 
   @@unique([storageBucket, storagePath])
   @@index([organizationId, contextType, contextId])
@@ -638,12 +649,33 @@ model Charge {
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   lease          Lease              @relation(fields: [organizationId, leaseId], references: [organizationId, id], onDelete: Restrict)
   adjustments    ChargeAdjustment[]
+  paymentProofs  PaymentProof[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, leaseId, type, competence])
   @@index([organizationId, status, dueDate])
   @@index([organizationId, competence, type])
   @@map("charges")
+}
+
+model PaymentProof {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String             @map("organization_id") @db.Uuid
+  chargeId         String             @map("charge_id") @db.Uuid
+  documentId       String             @unique @map("document_id") @db.Uuid
+  status           PaymentProofStatus @default(PENDING)
+  reviewNote       String?            @map("review_note") @db.VarChar(500)
+  reviewedByUserId String?            @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt       DateTime?          @map("reviewed_at") @db.Timestamptz(3)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  charge           Charge             @relation(fields: [organizationId, chargeId], references: [organizationId, id], onDelete: Restrict)
+  document         Document           @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  reviewedBy       User?              @relation("PaymentProofReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, chargeId, status, createdAt])
+  @@map("payment_proofs")
 }
 
 model ChargeAdjustment {

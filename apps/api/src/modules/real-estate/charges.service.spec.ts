@@ -40,6 +40,7 @@ function charge() {
       tenants: [],
     },
     adjustments: [],
+    paymentProofs: [],
   };
 }
 

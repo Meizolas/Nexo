@@ -88,6 +88,7 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - `LeaseTenant`: vínculo histórico entre contrato e um ou mais `Party` com papel `TENANT`; exatamente um vínculo identifica o responsável financeiro principal.
 - `Charge`: obrigação financeira mensal que preserva tipo, competência, vencimento, valor-base, moeda e estado.
 - `ChargeAdjustment`: lançamento manual e histórico de multa, juros ou desconto, com valor fixo, motivo e estado ativo/cancelado.
+- `PaymentProof`: análise de um documento privado associado à cobrança, com estado pendente, aceito ou rejeitado e revisor opcional até a decisão.
 - `Payment`: liquidação total ou parcial, conforme decisão funcional.
 - `Receipt`: comprovante emitido pelo sistema após confirmação.
 - `MaintenanceRequest`: solicitação ligada ao contrato ou unidade.
@@ -114,6 +115,7 @@ Document ── DocumentLink ── Lease | Charge | Payment | MaintenanceReques
 - Ajustes financeiros existem apenas como valor fixo manual, exigem motivo, só mudam enquanto a cobrança está aberta e são cancelados sem exclusão do histórico.
 - Confirmar novamente o mesmo pagamento com a mesma chave de idempotência retorna o resultado anterior.
 - Comprovante enviado é evidência para análise, não confirmação de pagamento.
+- Aceitar ou rejeitar comprovante é uma transição única e auditada; rejeição exige motivo e nenhuma das decisões altera automaticamente o estado da cobrança.
 - Contratos encerrados ou cancelados não são removidos do histórico.
 - Intervalos de ocupação incompatíveis não podem ser criados para a mesma unidade.
 - Recibo depende de pagamento confirmado e não pode ser reatribuído.

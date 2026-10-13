@@ -337,6 +337,75 @@ export async function cancelChargeAdjustment(formData: FormData) {
   redirect(`${path}?adjustmentCanceled=1`);
 }
 
+export async function uploadPaymentProof(formData: FormData) {
+  const { chargeId, path } = chargePath(formData);
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect(
+      `${path}?error=${encodeURIComponent("Selecione um comprovante.")}`,
+    );
+  }
+  const upload = new FormData();
+  upload.set("file", file);
+  try {
+    await apiRequest(`/real-estate/charges/${chargeId}/payment-proofs`, {
+      method: "POST",
+      body: upload,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível enviar o comprovante.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?proofUploaded=1`);
+}
+
+export async function reviewPaymentProof(formData: FormData) {
+  const { chargeId, path } = chargePath(formData);
+  const proofId = String(formData.get("proofId") ?? "");
+  try {
+    await apiRequest(
+      `/real-estate/charges/${chargeId}/payment-proofs/${proofId}/review`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          status: String(formData.get("status") ?? ""),
+          note: optional(formData, "note"),
+        }),
+      },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível analisar o comprovante.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+  revalidatePath(path);
+  redirect(`${path}?proofReviewed=1`);
+}
+
+export async function downloadPaymentProof(formData: FormData) {
+  const { chargeId, path } = chargePath(formData);
+  const proofId = String(formData.get("proofId") ?? "");
+  try {
+    const result = await apiRequest<{ url: string }>(
+      `/real-estate/charges/${chargeId}/payment-proofs/${proofId}/download-url`,
+      { method: "POST" },
+    );
+    redirect(result.url);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível baixar o comprovante.";
+    redirect(`${path}?error=${encodeURIComponent(message)}`);
+  }
+}
+
 export async function createLegalCase(formData: FormData) {
   try {
     await apiRequest("/legal/cases", {

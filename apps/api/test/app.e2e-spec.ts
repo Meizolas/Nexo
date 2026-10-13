@@ -211,6 +211,7 @@ describe('AppController (e2e)', () => {
                   currency: 'BRL',
                   status: 'OPEN',
                   adjustments: [],
+                  paymentProofs: [],
                   lease: {
                     unit: {
                       id: 'unit-a',
@@ -452,6 +453,16 @@ describe('AppController (e2e)', () => {
       .set('x-organization-id', ORGANIZATION_A_ID)
       .expect(403);
     expect(denied.body.code).toBe('ACCESS_DENIED');
+
+    const proofReviewDenied = await request(app.getHttpServer())
+      .post(
+        `/api/v1/real-estate/charges/${CHARGE_ID}/payment-proofs/${CHARGE_ID}/review`,
+      )
+      .set('authorization', 'Bearer client-aal1')
+      .set('x-organization-id', ORGANIZATION_A_ID)
+      .send({ status: 'ACCEPTED' })
+      .expect(403);
+    expect(proofReviewDenied.body.code).toBe('ACCESS_DENIED');
   });
 
   afterEach(async () => {

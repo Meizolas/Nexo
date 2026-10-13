@@ -177,8 +177,11 @@ Critérios de aceite desta fatia:
 
 ### FR-RE-004 — Comprovantes e pagamentos
 
-- O locatário pode enviar comprovante para análise.
-- O envio do comprovante não confirma o pagamento automaticamente.
+- Um comprovante é um documento privado vinculado a uma cobrança e possui estado `PENDING`, `ACCEPTED` ou `REJECTED`.
+- Nesta fatia administrativa, a equipe autorizada pode enviar comprovante para uma cobrança `OPEN`; o envio pelo locatário será exposto no portal próprio.
+- O arquivo reutiliza validação de conteúdo, limite de 20 MB, hash SHA-256, storage privado e download por URL assinada temporária.
+- A análise aceita ou rejeita uma única vez, registra revisor/data/observação e exige motivo na rejeição.
+- O envio ou aceite do comprovante não confirma o pagamento automaticamente nem altera a cobrança para `PAID`.
 - A confirmação manual deve registrar ator, data, valor e chave de idempotência.
 - Repetir uma confirmação com a mesma chave não pode duplicar efeitos financeiros.
 
