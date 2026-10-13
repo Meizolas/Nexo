@@ -1,15 +1,7 @@
 "use client";
 
 import { cn } from "@platform/ui";
-import {
-  Bell,
-  ChevronRight,
-  House,
-  LogOut,
-  Menu,
-  PanelLeftClose,
-  X,
-} from "lucide-react";
+import { Bell, ChevronRight, House, LogOut, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -261,6 +253,16 @@ function Navigation({
   onNavigate?: () => void;
 }) {
   const ScopeIcon = scopeIcon[scope.key];
+  const activeIndex = Math.max(
+    0,
+    scope.navigation.findIndex((item) => {
+      const href = item.section
+        ? `/${scope.key}/${item.section}`
+        : `/${scope.key}`;
+      return item.section ? pathname.startsWith(href) : pathname === href;
+    }),
+  );
+
   return (
     <nav
       aria-label={`Navegação do módulo ${scope.eyebrow}`}
@@ -277,7 +279,12 @@ function Navigation({
           <p className="text-sm font-semibold">{scope.eyebrow}</p>
         </div>
       </div>
-      <div className="space-y-1">
+      <div className="relative flex flex-col gap-1">
+        <span
+          className="sidebar-tab-indicator pointer-events-none absolute left-0 right-[-16px] top-0 z-0 h-11 rounded-l-2xl bg-white shadow-sm transition-transform duration-500 [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
+          style={{ transform: `translateY(${activeIndex * 48}px)` }}
+          aria-hidden="true"
+        />
         {scope.navigation.map((item) => {
           const Icon = item.icon;
           const href = item.section
@@ -293,20 +300,21 @@ function Navigation({
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                "group relative z-10 flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
                 active
-                  ? "bg-white text-[var(--sidebar)] shadow-sm"
+                  ? "text-[var(--sidebar)]"
                   : "text-white/70 hover:bg-white/10 hover:text-white",
               )}
             >
               <Icon className="size-[18px] shrink-0" aria-hidden="true" />
               <span className="flex-1">{item.label}</span>
-              {active ? (
-                <PanelLeftClose
-                  className="size-3.5 opacity-45"
-                  aria-hidden="true"
-                />
-              ) : null}
+              <span
+                className={cn(
+                  "size-1.5 rounded-full bg-[var(--brand)] transition-all duration-300",
+                  active ? "scale-100 opacity-100" : "scale-0 opacity-0",
+                )}
+                aria-hidden="true"
+              />
             </Link>
           );
         })}

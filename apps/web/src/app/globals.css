@@ -77,6 +77,26 @@ textarea::placeholder {
   background: color-mix(in srgb, var(--brand) 22%, white);
 }
 
+.sidebar-tab-indicator::before,
+.sidebar-tab-indicator::after {
+  position: absolute;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  content: "";
+  background: transparent;
+}
+.sidebar-tab-indicator::before {
+  top: -24px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 7px 7px 0 7px white;
+}
+.sidebar-tab-indicator::after {
+  bottom: -24px;
+  border-top-right-radius: 20px;
+  box-shadow: 7px -7px 0 7px white;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
