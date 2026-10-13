@@ -57,7 +57,7 @@ export function AppShell({
   return (
     <div
       style={style}
-      className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[264px_1fr]"
+      className="min-h-screen bg-[var(--content-surface)] lg:grid lg:grid-cols-[264px_1fr]"
     >
       <aside className="sticky top-0 z-40 hidden h-screen w-[280px] overflow-hidden rounded-r-[32px] bg-[var(--sidebar)] text-white shadow-xl shadow-slate-950/20 lg:flex lg:flex-col">
         <Brand scope={scope} />
@@ -281,7 +281,7 @@ function Navigation({
       </div>
       <div className="relative flex flex-col gap-1">
         <span
-          className="sidebar-tab-indicator pointer-events-none absolute left-0 right-[-16px] top-0 z-0 h-11 rounded-l-2xl bg-white shadow-sm transition-transform duration-500 [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
+          className="sidebar-tab-indicator pointer-events-none absolute left-0 right-[-16px] top-0 z-0 h-11 rounded-l-2xl bg-[var(--content-surface)] transition-transform duration-500 [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
           style={{ transform: `translateY(${activeIndex * 48}px)` }}
           aria-hidden="true"
         />

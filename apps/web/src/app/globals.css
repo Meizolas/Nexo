@@ -11,6 +11,7 @@
   --brand-deep: #344027;
   --sidebar: #26351f;
   --sidebar-muted: #35472c;
+  --content-surface: #f1f5f9;
 }
 
 @theme inline {
@@ -89,12 +90,12 @@ textarea::placeholder {
 .sidebar-tab-indicator::before {
   top: -24px;
   border-bottom-right-radius: 20px;
-  box-shadow: 7px 7px 0 7px white;
+  box-shadow: 7px 7px 0 7px var(--content-surface);
 }
 .sidebar-tab-indicator::after {
   bottom: -24px;
   border-top-right-radius: 20px;
-  box-shadow: 7px -7px 0 7px white;
+  box-shadow: 7px -7px 0 7px var(--content-surface);
 }
 
 @media (prefers-reduced-motion: reduce) {
