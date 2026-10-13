@@ -65,9 +65,9 @@ export function AppShell({
   return (
     <div
       style={style}
-      className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[304px_1fr]"
+      className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[264px_1fr]"
     >
-      <aside className="sticky top-3 m-3 mr-0 hidden h-[calc(100vh-1.5rem)] overflow-hidden rounded-[28px] bg-[var(--sidebar)] text-white shadow-xl shadow-slate-950/15 lg:flex lg:flex-col">
+      <aside className="sticky top-0 z-40 hidden h-screen w-[280px] overflow-hidden rounded-r-[32px] bg-[var(--sidebar)] text-white shadow-xl shadow-slate-950/20 lg:flex lg:flex-col">
         <Brand scope={scope} />
         <Navigation scope={scope} pathname={pathname} />
         <div className="mt-auto border-t border-white/10 bg-black/5 p-4">
@@ -106,7 +106,7 @@ export function AppShell({
       ) : null}
       <aside
         className={cn(
-          "fixed inset-y-3 left-3 z-50 flex w-[min(86vw,320px)] flex-col overflow-hidden rounded-[28px] bg-[var(--sidebar)] text-white shadow-2xl transition-transform lg:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-[min(86vw,320px)] flex-col overflow-hidden rounded-r-[28px] bg-[var(--sidebar)] text-white shadow-2xl transition-transform lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
         aria-hidden={!mobileOpen}
