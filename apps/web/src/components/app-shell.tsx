@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, cn } from "@platform/ui";
+import { cn } from "@platform/ui";
 import {
   Bell,
   ChevronRight,
@@ -37,6 +37,7 @@ export function AppShell({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const alternate = otherScope(scope.key);
+  const ScopeIcon = scopeIcon[scope.key];
   const AlternateIcon = scopeIcon[alternate.key];
   const currentItem =
     scope.navigation.find((item) => {
@@ -51,6 +52,9 @@ export function AppShell({
     "--brand-deep": scope.accentDeep,
     "--sidebar": scope.secondary,
     "--sidebar-muted": scope.secondaryMuted,
+    "--alternate": alternate.accent,
+    "--alternate-deep": alternate.accentDeep,
+    "--alternate-soft": alternate.accentSoft,
   } as CSSProperties;
   const initials = userLabel
     .split(/[@.\s_-]+/)
@@ -61,32 +65,32 @@ export function AppShell({
   return (
     <div
       style={style}
-      className="min-h-screen lg:grid lg:grid-cols-[280px_1fr]"
+      className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[304px_1fr]"
     >
-      <aside className="hidden min-h-screen bg-[var(--sidebar)] text-white lg:flex lg:flex-col">
+      <aside className="sticky top-3 m-3 mr-0 hidden h-[calc(100vh-1.5rem)] overflow-hidden rounded-[28px] bg-[var(--sidebar)] text-white shadow-xl shadow-slate-950/15 lg:flex lg:flex-col">
         <Brand scope={scope} />
         <Navigation scope={scope} pathname={pathname} />
-        <div className="mt-auto border-t border-white/10 p-4">
-          <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[.16em] text-white/45">
+        <div className="mt-auto border-t border-white/10 bg-black/5 p-4">
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[.16em] text-white/70">
             Alternar módulo
           </p>
           <Link
             href={`/${alternate.key}`}
-            className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-white/25 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="group flex items-center gap-3 rounded-2xl border border-white/20 bg-[var(--alternate)] p-3.5 text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[var(--alternate-deep)] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <span className="grid size-9 place-items-center rounded-lg bg-white/10">
-              <AlternateIcon className="size-4" aria-hidden="true" />
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 ring-1 ring-white/15">
+              <AlternateIcon className="size-5" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">
                 {alternate.eyebrow}
               </span>
-              <span className="block text-xs text-white/55">
+              <span className="block text-xs text-white/75">
                 Ir para a área
               </span>
             </span>
             <ChevronRight
-              className="size-4 text-white/45 transition group-hover:translate-x-0.5"
+              className="size-4 shrink-0 text-white/75 transition group-hover:translate-x-0.5"
               aria-hidden="true"
             />
           </Link>
@@ -102,7 +106,7 @@ export function AppShell({
       ) : null}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[min(86vw,320px)] flex-col bg-[var(--sidebar)] text-white shadow-2xl transition-transform lg:hidden",
+          "fixed inset-y-3 left-3 z-50 flex w-[min(86vw,320px)] flex-col overflow-hidden rounded-[28px] bg-[var(--sidebar)] text-white shadow-2xl transition-transform lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
         aria-hidden={!mobileOpen}
@@ -128,17 +132,23 @@ export function AppShell({
         <Link
           href={`/${alternate.key}`}
           onClick={() => setMobileOpen(false)}
-          className="m-4 mt-auto flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
+          className="m-4 mt-auto flex items-center gap-3 rounded-2xl border border-white/20 bg-[var(--alternate)] p-3.5 text-white shadow-lg"
         >
-          <AlternateIcon className="size-5" />
-          <span className="text-sm font-semibold">
-            Ir para {alternate.eyebrow}
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15">
+            <AlternateIcon className="size-5" aria-hidden="true" />
           </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">
+              {alternate.eyebrow}
+            </span>
+            <span className="block text-xs text-white/75">Ir para a área</span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-white/75" />
         </Link>
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b bg-white/92 px-4 backdrop-blur md:px-7">
+        <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b bg-white/92 px-4 backdrop-blur md:px-6 lg:min-h-[72px]">
           <button
             className="grid size-10 place-items-center rounded-xl border bg-white text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] lg:hidden"
             onClick={() => setMobileOpen(true)}
@@ -165,20 +175,28 @@ export function AppShell({
               </li>
             </ol>
           </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <Badge className="hidden border-[var(--brand)]/20 bg-[var(--brand-soft)] text-[var(--brand-deep)] sm:inline-flex">
-              {scope.eyebrow}
-            </Badge>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div
+              className="hidden h-10 shrink-0 items-center gap-2 rounded-full border border-[var(--brand)]/15 bg-[var(--brand-soft)] px-3 text-[var(--brand-deep)] shadow-sm sm:flex"
+              title={`Módulo atual: ${scope.eyebrow}`}
+            >
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/80">
+                <ScopeIcon className="size-3.5" aria-hidden="true" />
+              </span>
+              <span className="whitespace-nowrap text-xs font-bold">
+                {scope.eyebrow}
+              </span>
+            </div>
             <Link
               href={`/${scope.key}/notifications`}
-              className="grid size-10 place-items-center rounded-xl border bg-white text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+              className="grid size-10 shrink-0 place-items-center rounded-xl border bg-white text-slate-600 shadow-sm hover:border-[var(--brand)]/30 hover:bg-[var(--brand-soft)] hover:text-[var(--brand-deep)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
               aria-label="Abrir notificações"
               title="Notificações"
             >
               <Bell className="size-4" />
             </Link>
             <div
-              className="grid size-10 place-items-center rounded-xl bg-[var(--sidebar)] text-sm font-bold text-white"
+              className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-[var(--sidebar)] text-sm font-bold leading-none text-white shadow-sm ring-1 ring-black/5"
               title={`Usuário: ${userLabel}`}
               aria-label={`Usuário: ${userLabel}`}
             >
@@ -186,7 +204,7 @@ export function AppShell({
             </div>
             <form action={logout}>
               <button
-                className="grid size-10 place-items-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+                className="grid size-10 shrink-0 place-items-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                 aria-label="Sair do sistema"
                 title="Sair"
               >
@@ -220,14 +238,14 @@ function Brand({
     <Link
       href={`/${scope.key}`}
       onClick={onNavigate}
-      className="flex h-20 items-center px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+      className="flex h-24 items-center px-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
       aria-label={`Nexo — ir para a visão geral de ${scope.eyebrow}`}
     >
       <Image
         src={logoNexo}
         alt="Nexo"
         priority
-        className="h-auto w-[154px] object-contain object-left"
+        className="h-auto w-[184px] object-contain object-left"
       />
     </Link>
   );
@@ -246,9 +264,9 @@ function Navigation({
   return (
     <nav
       aria-label={`Navegação do módulo ${scope.eyebrow}`}
-      className="flex-1 p-4"
+      className="min-h-0 flex-1 overflow-y-auto px-4 pb-4"
     >
-      <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3">
+      <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/5 bg-white/8 px-3 py-3">
         <span className="grid size-9 place-items-center rounded-lg bg-white/10">
           <ScopeIcon className="size-4" aria-hidden="true" />
         </span>
