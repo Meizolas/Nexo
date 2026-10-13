@@ -26,6 +26,8 @@ export interface ScopeConfig {
   accent: string;
   accentSoft: string;
   accentDeep: string;
+  secondary: string;
+  secondaryMuted: string;
   navigation: ScopeNavigationItem[];
 }
 
@@ -38,6 +40,8 @@ export const scopes: Record<ScopeKey, ScopeConfig> = {
     accent: "#4F5D3A",
     accentSoft: "#edf1e8",
     accentDeep: "#344027",
+    secondary: "#26351F",
+    secondaryMuted: "#35472C",
     navigation: [
       { label: "Visão geral", icon: Gauge },
       { label: "Clientes", section: "people", icon: Users },
@@ -54,6 +58,8 @@ export const scopes: Record<ScopeKey, ScopeConfig> = {
     accent: "#7A263A",
     accentSoft: "#f8ecef",
     accentDeep: "#561829",
+    secondary: "#4A1424",
+    secondaryMuted: "#641E32",
     navigation: [
       { label: "Visão geral", icon: Gauge },
       { label: "Pessoas", section: "people", icon: Users },

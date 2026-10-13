@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { FormActionButton } from "@/components/form-action-button";
 import { apiRequest } from "@/lib/api";
 import {
   createCaseMovement,
@@ -286,7 +287,11 @@ function Hearings({
             />
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" name="isClientVisible" className="size-4 rounded border-slate-300" />
+            <input
+              type="checkbox"
+              name="isClientVisible"
+              className="size-4 rounded border-slate-300"
+            />
             Exibir título, data e local no portal do cliente
           </label>
           <div className="flex justify-end">
@@ -464,9 +469,13 @@ function LegalDocuments({
                       name="documentId"
                       value={document.id}
                     />
-                    <button className="text-sm font-semibold text-red-700">
+                    <FormActionButton
+                      className="text-sm font-semibold text-red-700"
+                      pendingLabel="Removendo…"
+                      confirmMessage="Remover este documento permanentemente do processo?"
+                    >
                       Remover
-                    </button>
+                    </FormActionButton>
                   </form>
                 </div>
               </CardContent>
@@ -589,9 +598,7 @@ function Deadlines({
           {deadlines.map((item) => (
             <Card
               key={item.id}
-              className={
-                item.isOverdue ? "border-red-300 bg-red-50/40" : ""
-              }
+              className={item.isOverdue ? "border-red-300 bg-red-50/40" : ""}
             >
               <CardContent className="flex flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
                 <div>
@@ -977,9 +984,13 @@ function MovementCard({
             <form action={unpublishCaseMovement} className="mt-3">
               <input type="hidden" name="caseId" value={caseId} />
               <input type="hidden" name="movementId" value={movement.id} />
-              <button className="text-xs font-bold text-red-700">
+              <FormActionButton
+                className="text-xs font-bold text-red-700"
+                pendingLabel="Retirando…"
+                confirmMessage="Retirar esta movimentação do portal do cliente?"
+              >
                 Retirar publicação
-              </button>
+              </FormActionButton>
             </form>
           </div>
         ) : (

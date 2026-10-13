@@ -14,6 +14,7 @@ import {
   revokePortalAccess,
 } from "@/app/[scope]/[section]/actions";
 import type { ReactNode } from "react";
+import { FormActionButton } from "@/components/form-action-button";
 
 interface Client {
   id: string;
@@ -122,12 +123,18 @@ export async function LegalClientsSection({
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <Badge>
-                      {client.type === "PERSON" ? "Pessoa física" : "Pessoa jurídica"}
+                      {client.type === "PERSON"
+                        ? "Pessoa física"
+                        : "Pessoa jurídica"}
                     </Badge>
                     <PortalAccessManager
                       client={client}
-                      members={members.filter(({ roles }) => roles.includes("CLIENT"))}
-                      links={accessLinks.filter(({ partyId }) => partyId === client.id)}
+                      members={members.filter(({ roles }) =>
+                        roles.includes("CLIENT"),
+                      )}
+                      links={accessLinks.filter(
+                        ({ partyId }) => partyId === client.id,
+                      )}
                     />
                   </div>
                 </article>
@@ -158,23 +165,45 @@ function PortalAccessManager({
       </summary>
       <div className="mt-3 space-y-3">
         {links.map((link) => (
-          <div key={link.id} className="flex items-center justify-between gap-2 text-xs">
+          <div
+            key={link.id}
+            className="flex items-center justify-between gap-2 text-xs"
+          >
             <span className="truncate">{link.user.displayName}</span>
             <form action={revokePortalAccess}>
               <input type="hidden" name="linkId" value={link.id} />
-              <button className="font-semibold text-red-700">Revogar</button>
+              <FormActionButton
+                className="font-semibold text-red-700"
+                pendingLabel="Revogando…"
+                confirmMessage="Revogar o acesso desta pessoa ao portal? Ela não poderá mais consultar seus dados."
+              >
+                Revogar
+              </FormActionButton>
             </form>
           </div>
         ))}
         {candidates.length ? (
           <form action={grantPortalAccess} className="flex gap-2 border-t pt-3">
             <input type="hidden" name="partyId" value={client.id} />
-            <label className="sr-only" htmlFor={`portal-user-${client.id}`}>Conta de cliente</label>
-            <select id={`portal-user-${client.id}`} name="userId" required className="h-9 min-w-0 flex-1 rounded-lg border px-2 text-xs">
+            <label className="sr-only" htmlFor={`portal-user-${client.id}`}>
+              Conta de cliente
+            </label>
+            <select
+              id={`portal-user-${client.id}`}
+              name="userId"
+              required
+              className="h-9 min-w-0 flex-1 rounded-lg border px-2 text-xs"
+            >
               <option value="">Associar conta...</option>
-              {candidates.map((member) => <option key={member.id} value={member.id}>{member.displayName}</option>)}
+              {candidates.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.displayName}
+                </option>
+              ))}
             </select>
-            <button className="h-9 rounded-lg bg-[var(--brand)] px-3 text-xs font-semibold text-white">Liberar</button>
+            <button className="h-9 rounded-lg bg-[var(--brand)] px-3 text-xs font-semibold text-white">
+              Liberar
+            </button>
           </form>
         ) : (
           <p className="border-t pt-3 text-xs leading-5 text-slate-500">

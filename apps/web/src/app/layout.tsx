@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Átrio", template: "%s | Átrio" },
+  title: { default: "Nexo", template: "%s | Nexo" },
   description: "Gestão jurídica e imobiliária em um só lugar.",
 };
 

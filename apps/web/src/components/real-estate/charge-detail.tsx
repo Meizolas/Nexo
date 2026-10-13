@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { FormActionButton } from "@/components/form-action-button";
 import {
   addChargeAdjustment,
   cancelChargeAdjustment,
@@ -282,9 +283,13 @@ export async function ChargeDetail({
                         name="adjustmentId"
                         value={adjustment.id}
                       />
-                      <button className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-red-700">
+                      <FormActionButton
+                        className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-red-700"
+                        pendingLabel="Cancelando…"
+                        confirmMessage="Cancelar este ajuste financeiro? Confirme para continuar."
+                      >
                         <XCircle className="size-4" /> Cancelar
-                      </button>
+                      </FormActionButton>
                     </form>
                   ) : null}
                 </div>

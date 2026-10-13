@@ -3,6 +3,7 @@ import { ArrowLeft, CalendarDays, FileText, UserRound } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { FormActionButton } from "@/components/form-action-button";
 import {
   activateLease,
   cancelLease,
@@ -301,9 +302,13 @@ export async function ContractDetail({
             </form>
             <form action={cancelLease}>
               <input type="hidden" name="leaseId" value={lease.id} />
-              <button className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700">
+              <FormActionButton
+                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700"
+                pendingLabel="Cancelando…"
+                confirmMessage="Cancelar este contrato em rascunho? Confirme para continuar."
+              >
                 Cancelar rascunho
-              </button>
+              </FormActionButton>
             </form>
           </div>
         </section>
@@ -324,9 +329,13 @@ export async function ContractDetail({
                   className="rounded-lg border px-3 py-2"
                 />
               </label>
-              <button className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700">
+              <FormActionButton
+                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700"
+                pendingLabel="Encerrando…"
+                confirmMessage="Encerrar este contrato? Essa alteração afeta a situação da locação."
+              >
                 Encerrar contrato
-              </button>
+              </FormActionButton>
             </form>
           </CardContent>
         </Card>

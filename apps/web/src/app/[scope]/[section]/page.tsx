@@ -1,5 +1,5 @@
-import { Button, Card, CardContent } from "@platform/ui";
-import { Plus } from "lucide-react";
+import { Card, CardContent } from "@platform/ui";
+import { Construction } from "lucide-react";
 import { notFound } from "next/navigation";
 import { isScopeKey, scopes } from "@/lib/scopes";
 import { LegalCasesSection } from "@/components/legal/legal-cases-section";
@@ -70,8 +70,6 @@ export default async function SectionPage({
         error={error}
       />
     );
-  const Icon = item.icon;
-
   return (
     <div className="space-y-6">
       <div>
@@ -82,25 +80,23 @@ export default async function SectionPage({
           {item.label}
         </h1>
         <p className="mt-2 text-slate-500">
-          Esta área está pronta para receber os dados do módulo.
+          Esta funcionalidade ainda está em desenvolvimento.
         </p>
       </div>
       <Card className="border-dashed">
         <CardContent className="grid min-h-80 place-items-center p-8 text-center">
           <div>
             <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]">
-              <Icon className="size-6" />
+              <Construction className="size-6" aria-hidden="true" />
             </span>
             <h2 className="mt-4 text-lg font-bold text-slate-900">
-              Nenhum registro por aqui
+              Área em desenvolvimento
             </h2>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-              Quando houver registros, eles aparecerão nesta página com filtros
-              e ações contextuais.
+              Esta opção já aparece na navegação para apresentar a estrutura do
+              módulo, mas ainda não possui ações disponíveis. Você será
+              informado assim que ela estiver pronta.
             </p>
-            <Button className="mt-5">
-              <Plus className="size-4" /> Adicionar registro
-            </Button>
           </div>
         </CardContent>
       </Card>

@@ -3,6 +3,7 @@ import { ArrowLeft, Building2, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
+import { FormActionButton } from "@/components/form-action-button";
 import { apiRequest, ApiRequestError } from "@/lib/api";
 import {
   addPropertyOwner,
@@ -139,9 +140,13 @@ export async function PropertyDetail({
                           name="ownershipId"
                           value={ownership.id}
                         />
-                        <button className="text-xs font-semibold text-red-700">
+                        <FormActionButton
+                          className="text-xs font-semibold text-red-700"
+                          pendingLabel="Encerrando…"
+                          confirmMessage="Encerrar este vínculo de propriedade? Confirme para continuar."
+                        >
                           Encerrar vínculo
-                        </button>
+                        </FormActionButton>
                       </form>
                     )}
                   </article>

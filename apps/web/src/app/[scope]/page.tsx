@@ -15,6 +15,7 @@ import {
   Plus,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isScopeKey, scopes } from "@/lib/scopes";
 
@@ -51,10 +52,13 @@ export default async function ScopeDashboard({
           </h1>
           <p className="mt-2 max-w-2xl text-slate-500">{config.description}</p>
         </div>
-        <button className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--brand-deep)]">
+        <Link
+          href={`/${scope}/${legal ? "cases" : "properties"}`}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--brand-deep)]"
+        >
           <Plus className="size-4" />
-          {legal ? "Novo processo" : "Novo imóvel"}
-        </button>
+          {legal ? "Gerenciar processos" : "Gerenciar imóveis"}
+        </Link>
       </section>
       <section className="grid gap-4 md:grid-cols-3">
         {metrics.map(([label, value, detail], index) => (
@@ -93,9 +97,12 @@ export default async function ScopeDashboard({
                 Atualizações que exigem sua atenção.
               </CardDescription>
             </div>
-            <button className="text-sm font-semibold text-[var(--brand)]">
-              Ver tudo
-            </button>
+            <Link
+              href={`/${scope}/${legal ? "cases" : "properties"}`}
+              className="text-sm font-semibold text-[var(--brand)] hover:underline"
+            >
+              Ver área
+            </Link>
           </CardHeader>
           <CardContent className="space-y-1">
             {[

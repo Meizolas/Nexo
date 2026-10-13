@@ -16,9 +16,57 @@ export class ApiRequestError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly code?: string,
   ) {
     super(message);
+    this.name = "ApiRequestError";
   }
+}
+
+interface ApiErrorBody {
+  code?: string;
+  message?: string;
+}
+
+async function request(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new ApiRequestError(
+      503,
+      "A API do Nexo não está acessível. Confirme se o servidor foi iniciado e tente novamente.",
+      "API_UNAVAILABLE",
+    );
+  }
+}
+
+async function responseError(
+  response: Response,
+  fallback: string,
+): Promise<ApiRequestError> {
+  const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+
+  if (response.status === 401) {
+    return new ApiRequestError(
+      401,
+      "A API recusou sua sessão. Verifique SUPABASE_JWT_ISSUER e SUPABASE_JWT_AUDIENCE no .env, reinicie o sistema e entre novamente.",
+      body?.code ?? "AUTHENTICATION_REQUIRED",
+    );
+  }
+
+  if (response.status === 403) {
+    return new ApiRequestError(
+      403,
+      body?.message ?? "Seu usuário não tem permissão para realizar esta ação.",
+      body?.code ?? "ACCESS_DENIED",
+    );
+  }
+
+  return new ApiRequestError(
+    response.status,
+    body?.message ?? fallback,
+    body?.code,
+  );
 }
 
 const getApiContext = cache(async () => {
@@ -33,13 +81,13 @@ const getApiContext = cache(async () => {
   if (!userData.user || !sessionData.session) redirect("/login");
 
   const authorization = `Bearer ${sessionData.session.access_token}`;
-  const response = await fetch(`${apiUrl}/organizations`, {
+  const response = await request(`${apiUrl}/organizations`, {
     headers: { authorization },
     cache: "no-store",
   });
   if (!response.ok) {
-    throw new ApiRequestError(
-      response.status,
+    throw await responseError(
+      response,
       "Não foi possível carregar as organizações.",
     );
   }
@@ -72,18 +120,15 @@ export async function apiRequest<T>(
   )
     headers.set("content-type", "application/json");
 
-  const response = await fetch(`${apiUrl}${path}`, {
+  const response = await request(`${apiUrl}${path}`, {
     ...init,
     headers,
     cache: "no-store",
   });
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string;
-    } | null;
-    throw new ApiRequestError(
-      response.status,
-      body?.message ?? "Não foi possível concluir a operação.",
+    throw await responseError(
+      response,
+      "Não foi possível concluir a operação.",
     );
   }
   if (response.status === 204) return undefined as T;

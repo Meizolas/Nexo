@@ -37,8 +37,11 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           >
             Senha
           </label>
-          <span className="text-xs font-semibold text-[#4f5d3a]">
-            Esqueci minha senha
+          <span
+            className="text-xs font-medium text-slate-400"
+            title="Recuperação de senha ainda não disponível"
+          >
+            Recuperação em breve
           </span>
         </div>
         <input
@@ -55,12 +58,19 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       {state.message ? (
         <p
           role="alert"
+          aria-live="assertive"
           className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
         >
           {state.message}
         </p>
       ) : null}
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full bg-[#4f5d3a]"
+        disabled={pending}
+        aria-busy={pending}
+      >
         {pending ? (
           <LoaderCircle className="size-4 animate-spin" />
         ) : (
