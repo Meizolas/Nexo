@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
-import { isScopeKey, scopes } from "@/lib/scopes";
+import { isScopeKey } from "@/lib/scopes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function ScopeLayout({
@@ -17,7 +17,7 @@ export default async function ScopeLayout({
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/login");
   return (
-    <AppShell scope={scopes[scope]} userLabel={data.user.email ?? "Usuário"}>
+    <AppShell scopeKey={scope} userLabel={data.user.email ?? "Usuário"}>
       {children}
     </AppShell>
   );

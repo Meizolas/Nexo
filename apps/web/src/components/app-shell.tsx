@@ -16,17 +16,24 @@ import { usePathname } from "next/navigation";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { logout } from "@/app/actions/logout";
 import logoNexo from "@/images/logo_nexo.png";
-import { otherScope, scopeIcon, type ScopeConfig } from "@/lib/scopes";
+import {
+  otherScope,
+  scopeIcon,
+  scopes,
+  type ScopeConfig,
+  type ScopeKey,
+} from "@/lib/scopes";
 
 export function AppShell({
-  scope,
+  scopeKey,
   children,
   userLabel,
 }: {
-  scope: ScopeConfig;
+  scopeKey: ScopeKey;
   children: ReactNode;
   userLabel: string;
 }) {
+  const scope = scopes[scopeKey];
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const alternate = otherScope(scope.key);
