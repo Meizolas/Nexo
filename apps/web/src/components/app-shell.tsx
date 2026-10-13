@@ -76,21 +76,21 @@ export function AppShell({
           </p>
           <Link
             href={`/${alternate.key}`}
-            className="group flex items-center gap-3 rounded-2xl border border-white/20 bg-[var(--alternate)] p-3.5 text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[var(--alternate-deep)] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="group flex items-center gap-3 rounded-2xl border border-white/30 bg-white/95 p-3 text-slate-800 shadow-md shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 ring-1 ring-white/15">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--alternate-soft)] text-[var(--alternate)] ring-1 ring-[var(--alternate)]/10">
               <AlternateIcon className="size-5" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">
+              <span className="block truncate text-sm font-bold text-slate-800">
                 {alternate.eyebrow}
               </span>
-              <span className="block text-xs text-white/75">
+              <span className="block text-xs text-slate-500">
                 Ir para a área
               </span>
             </span>
             <ChevronRight
-              className="size-4 shrink-0 text-white/75 transition group-hover:translate-x-0.5"
+              className="size-4 shrink-0 text-[var(--alternate)] transition group-hover:translate-x-0.5"
               aria-hidden="true"
             />
           </Link>
@@ -132,18 +132,18 @@ export function AppShell({
         <Link
           href={`/${alternate.key}`}
           onClick={() => setMobileOpen(false)}
-          className="m-4 mt-auto flex items-center gap-3 rounded-2xl border border-white/20 bg-[var(--alternate)] p-3.5 text-white shadow-lg"
+          className="m-4 mt-auto flex items-center gap-3 rounded-2xl border border-white/30 bg-white/95 p-3 text-slate-800 shadow-md"
         >
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--alternate-soft)] text-[var(--alternate)]">
             <AlternateIcon className="size-5" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">
+            <span className="block text-sm font-bold text-slate-800">
               {alternate.eyebrow}
             </span>
-            <span className="block text-xs text-white/75">Ir para a área</span>
+            <span className="block text-xs text-slate-500">Ir para a área</span>
           </span>
-          <ChevronRight className="size-4 shrink-0 text-white/75" />
+          <ChevronRight className="size-4 shrink-0 text-[var(--alternate)]" />
         </Link>
       </aside>
 
